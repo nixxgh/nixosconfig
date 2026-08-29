@@ -1,0 +1,9 @@
+figureout how noctalia settings are stored, 
+
+update ncupdate to new command
+
+change the update noctalia.nix to be derived from settings.toml rather than settings.json (in noctalia.nix)
+
+set up a greeter
+
+make it so greeter launches niri upon login
