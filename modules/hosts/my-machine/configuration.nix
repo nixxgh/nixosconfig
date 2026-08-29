@@ -69,8 +69,6 @@
     #  wget
       git
       gh
-    #temp
-      neovim
     ];
 
     # Some programs need SUID wrappers, can be configured further or are
@@ -84,6 +82,15 @@
     #temp
     programs.firefox.enable = true;
     virtualisation.docker.enable = true;
+    programs.neovim = {
+      enable = true;
+      defaultEditor = true;
+      configure = {
+        customRC = ''
+          set clipboard+=unnamedplus
+        '';
+      };
+   };
     # List services that you want to enable:
 
     # Enable the OpenSSH daemon.
