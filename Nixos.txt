@@ -1,11 +1,11 @@
 Nixos.
-Git)
-Gh)
-Neovim)
+Git.
+Gh.
+Neovim.
 Niri.
 Noctalia.
 HomeManager
-Greeter (Sddm)
+Greeter (Sddm).
 Yazi
 Tmux
 Zen Browser

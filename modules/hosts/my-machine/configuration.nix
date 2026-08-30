@@ -5,6 +5,8 @@
       self.nixosModules.myMachineHardware
       self.nixosModules.niri
       self.nixosModules.sddm
+      self.nixosModules.audio
+      self.nixosModules.bluetooth
     ];
     
     # Environment Aliases
