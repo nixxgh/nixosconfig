@@ -18,6 +18,9 @@
       
       # Enable JACK compatibility layer for pro audio apps
       jack.enable = true;
+
+      # ADD THIS: The session manager that routes Bluetooth audio!
+      wireplumber.enable = true;
     };
   };
 }
