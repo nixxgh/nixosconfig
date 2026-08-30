@@ -1,0 +1,16 @@
+Nixos.
+Git)
+Gh)
+Neovim)
+Niri.
+Noctalia.
+HomeManager
+Greeter (Sddm)
+Yazi
+Tmux
+Zen Browser
+ZSH Shell
+Fastfetch
+Tailscale
+Sunshine+Moonlight
+
