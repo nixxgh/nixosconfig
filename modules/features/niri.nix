@@ -13,6 +13,8 @@
     packages.myNiri = inputs.wrapper-modules.wrappers.niri.wrap {
       inherit pkgs;
       settings = {
+        hotkey-overlay.skip-at-startup = true;
+         
         spawn-at-startup = [
           (lib.getExe self'.packages.myNoctalia)
         ];
