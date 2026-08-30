@@ -6,12 +6,13 @@
 
       settings = {
         Wayland = {
-          # Tell SDDM to launch Weston using a config file generated in the Nix store
-          CompositorCommand = "weston --shell=fullscreen-shell.so --config ${pkgs.writeText \"sddm-weston.ini\" ''
+          # Notice how it is just "sddm-weston.ini" now, without the backslashes!
+          CompositorCommand = "weston --shell=fullscreen-shell.so --config ${pkgs.writeText "sddm-weston.ini" ''
             [libinput]
             enable-tap=true
           ''}";
         };
+      };   
     };
   };
 } 
