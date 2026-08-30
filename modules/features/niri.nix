@@ -27,7 +27,7 @@
               xkb.layout = "us,ua";
             };
 	  touchpad = {
-	      tap = true;
+	      tap = {};
 	    };
 	}; 
            
