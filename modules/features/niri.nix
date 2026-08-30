@@ -22,9 +22,14 @@
 	xwayland-satellite.path = 
 	  lib.getExe pkgs.xwayland-satellite;
       
-        input.keyboard = {
-          xkb.layout = "us,ua";
-        };
+        input = {
+	  keyboard = {
+              xkb.layout = "us,ua";
+            };
+	  touchpad = {
+	      tap = true;
+	    };
+	}; 
            
         layout.gaps = 5;
         layout."background-color" = "#000000";

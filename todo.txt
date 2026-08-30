@@ -7,3 +7,7 @@ change the update noctalia.nix to be derived from settings.toml rather than sett
 set up a greeter
 
 make it so greeter launches niri upon login
+
+niri tap to click support
+
+home manager 
