@@ -1,7 +1,7 @@
 { self, inputs, ... }: {
   flake.nixosModules.audio = { pkgs, lib, config, ... }: {
     # Disable the old PulseAudio server
-    hardware.pulseaudio.enable = false;
+    services.pulseaudio.enable = false;
     
     # RTKit is highly recommended for PipeWire to ensure smooth audio
     security.rtkit.enable = true;
