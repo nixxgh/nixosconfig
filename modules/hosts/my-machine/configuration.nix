@@ -52,6 +52,13 @@
       layout = "us";
       variant = "";
     };
+    #enable touch pad service
+    services.libinput = {
+      enable = true;
+      touchpad = {
+        tapping = true; #enables tap to click
+      };
+    };
 
     # Define a user account. Don't forget to set a password with ‘passwd’.
     users.users."nixx" = {
