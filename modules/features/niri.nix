@@ -18,7 +18,7 @@
         ];
 
 	xwayland-satellite.path = 
-	  lib.getExe pkgs.wayland-satellite;
+	  lib.getExe pkgs.xwayland-satellite;
       
         input.keyboard = {
           xkb.layout = "us,ua";
