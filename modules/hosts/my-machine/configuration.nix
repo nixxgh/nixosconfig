@@ -9,7 +9,8 @@
     # Environment Aliases
     environment.shellAliases = {
     rebuild = "sudo nixos-rebuild switch --flake /home/nixx/myNixOS#myMachine";
-    ncupdate = "nix run nixpkgs#noctalia -- config export > ~/myNixOS/modules/features/.noctalia-config.toml && echo 'stage and commit myNixOS, to keep tree clean!'";
+    ncupdate = "nix run nixpkgs#noctalia -- config export > ~/myNixOS/modules/features/.noctalia-config.toml " +
+               "&& echo 'stage and commit myNixOS, to keep tree clean!'";
     };
 
     # Bootloader.
