@@ -14,6 +14,12 @@
       inherit pkgs;
       settings = {
         hotkey-overlay.skip-at-startup = true;
+
+	gestures = {
+          hot-corners = {
+            off = {};
+          };
+        };
          
         spawn-at-startup = [
           (lib.getExe self'.packages.myNoctalia)
