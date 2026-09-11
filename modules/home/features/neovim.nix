@@ -10,6 +10,8 @@
       defaultEditor = true;
       viAlias = true;
       vimAlias = true;
+      withRuby = false;
+      withPython3 = false;
 
       plugins = with pkgs.vimPlugins; [
         nvim-treesitter.withAllGrammars
@@ -19,7 +21,7 @@
         lualine-nvim
       ];
 
-      extraLuaConfig = ''
+      initLua = ''
         -- Leader key
         vim.g.mapleader = " "
 
