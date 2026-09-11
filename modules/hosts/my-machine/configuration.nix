@@ -18,6 +18,7 @@
           rebuild = "(cd /home/nixx/myNixOS && git add . && (git diff --cached --quiet || (git commit -m 'no comment by user' && (git push || echo '⚠️ git push failed, continuing locally...')))) && sudo nixos-rebuild switch --flake /home/nixx/myNixOS#myMachine";
           ncupdate = "nix run nixpkgs#noctalia -- config export > ~/myNixOS/modules/features/.noctalia-config.toml " +
                      "&& echo 'stage and commit myNixOS, to keep tree clean!'";
+          nixclean = "nix-collect-garbage -d && sudo nix-collect-garbage -d && nix store optimise";
         };
 
         # Bootloader
@@ -75,8 +76,14 @@
         # Root Daemons
         virtualisation.docker.enable = true;
 
-        # Nix Settings
+        # Nix Settings & Maintenance
         nix.settings.experimental-features = [ "nix-command" "flakes" ];
+        nix.settings.auto-optimise-store = true;
+        nix.gc = {
+          automatic = true;
+          dates = "weekly";
+          options = "--delete-older-than 7d";
+        };
 
         system.stateVersion = "26.05";
       })
