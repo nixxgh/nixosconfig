@@ -19,6 +19,7 @@
           ncupdate = "nix run nixpkgs#noctalia -- config export > ~/myNixOS/modules/features/.noctalia-config.toml " +
                      "&& echo 'stage and commit myNixOS, to keep tree clean!'";
           nixclean = "nix-collect-garbage -d && sudo nix-collect-garbage -d && nix store optimise";
+          ff = "fastfetch";
         };
 
         # Bootloader

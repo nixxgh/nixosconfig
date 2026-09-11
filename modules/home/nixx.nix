@@ -7,6 +7,7 @@
       self.homeModules.zsh
       self.homeModules.tmux
       self.homeModules.yazi
+      self.homeModules.fastfetch
     ];
 
     home.username = "nixx";
