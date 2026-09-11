@@ -82,6 +82,7 @@
       gh
       #temp
       yt-dlp
+      antigravity-cli
     ];
 
     # Some programs need SUID wrappers, can be configured further or are
