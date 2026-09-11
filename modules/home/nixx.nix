@@ -4,6 +4,7 @@
       self.homeModules.git
       self.homeModules.neovim
       self.homeModules.firefox
+      self.homeModules.zsh
     ];
 
     home.username = "nixx";

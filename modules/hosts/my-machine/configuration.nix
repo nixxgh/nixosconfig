@@ -59,10 +59,12 @@
           };
         };
 
-        # User Account
+        # User Account & Default Shell
+        programs.zsh.enable = true;
         users.users."nixx" = {
           isNormalUser = true;
           description = "nixx";
+          shell = pkgs.zsh;
           extraGroups = [ "networkmanager" "wheel" "docker" ];
           packages = with pkgs; [];
         };

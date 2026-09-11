@@ -10,9 +10,9 @@
 - [x] Home Manager (Dendritic integration in modules/home/nixx.nix)
 - [x] Greeter (SDDM display manager)
 - [x] Maintenance & GC (Automatic weekly cleanup, store deduplication, and nixclean alias)
+- [x] ZSH Shell (Default shell, autosuggestions, syntax highlighting, Starship prompt)
 
 ## Pending / To Do
-- [ ] ZSH Shell (Default shell, plugins, prompt, aliases)
 - [ ] Tmux (Terminal multiplexer)
 - [ ] Yazi (Terminal file manager + preview plugins)
 - [ ] Fastfetch (System information display)
