@@ -71,9 +71,7 @@
 
         # System Packages & Unfree License
         nixpkgs.config.allowUnfree = true;
-        environment.systemPackages = with pkgs; [
-          git
-        ];
+        environment.systemPackages = with pkgs; [];
 
         # Root Daemons
         virtualisation.docker.enable = true;
