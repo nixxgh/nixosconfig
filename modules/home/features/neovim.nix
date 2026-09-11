@@ -19,6 +19,8 @@
         plenary-nvim
         catppuccin-nvim
         lualine-nvim
+        nvim-web-devicons
+        vim-tmux-navigator
       ];
 
       initLua = ''
@@ -41,7 +43,7 @@
         vim.cmd.colorscheme "catppuccin-mocha"
         require('lualine').setup {
           options = {
-            theme = 'catppuccin'
+            theme = 'catppuccin-mocha'
           }
         }
 
