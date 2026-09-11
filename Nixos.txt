@@ -1,16 +1,22 @@
-Nixos.
-Git.
-Gh.
-Neovim.
-Niri.
-Noctalia.
-HomeManager
-Greeter (Sddm).
-Yazi
-Tmux
-Zen Browser
-ZSH Shell
-Fastfetch
-Tailscale
-Sunshine+Moonlight
+# NixOS Roadmap
+
+## Completed
+- [x] NixOS (Base system on nixos-unstable, LUKS, systemd-boot)
+- [x] Git (Configured in Home Manager with GitHub identity)
+- [x] Gh (GitHub CLI managed via Home Manager)
+- [x] Neovim (Basic setup with clipboard integration)
+- [x] Niri (Wayland tiling compositor + keybindings)
+- [x] Noctalia (Shell / bar + auto-export on shutdown hook)
+- [x] Home Manager (Dendritic integration in modules/home/nixx.nix)
+- [x] Greeter (SDDM display manager)
+
+## Pending / To Do
+- [ ] ZSH Shell (Default shell, plugins, prompt, aliases)
+- [ ] Tmux (Terminal multiplexer)
+- [ ] Yazi (Terminal file manager + preview plugins)
+- [ ] Fastfetch (System information display)
+- [ ] Zen Browser (Browser installation & configuration)
+- [ ] Tailscale (Mesh VPN service)
+- [ ] Sunshine + Moonlight (Desktop/game streaming)
+
 
