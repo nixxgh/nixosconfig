@@ -13,9 +13,9 @@
     
     # Environment Aliases
     environment.shellAliases = {
-    rebuild = "sudo nixos-rebuild switch --flake /home/nixx/myNixOS#myMachine";
-    ncupdate = "nix run nixpkgs#noctalia -- config export > ~/myNixOS/modules/features/.noctalia-config.toml " +
-               "&& echo 'stage and commit myNixOS, to keep tree clean!'";
+      rebuild = "(cd /home/nixx/myNixOS && git add . && (git diff --cached --quiet || (git commit -m 'no comment by user' && (git push || echo '⚠️ git push failed, continuing locally...')))) && sudo nixos-rebuild switch --flake /home/nixx/myNixOS#myMachine";
+      ncupdate = "nix run nixpkgs#noctalia -- config export > ~/myNixOS/modules/features/.noctalia-config.toml " +
+                 "&& echo 'stage and commit myNixOS, to keep tree clean!'";
     };
 
     # Bootloader.
