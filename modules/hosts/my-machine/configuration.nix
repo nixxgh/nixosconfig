@@ -7,6 +7,8 @@
       self.nixosModules.sddm
       self.nixosModules.audio
       self.nixosModules.bluetooth
+      self.nixosModules.noctalia
+      self.nixosModules.homeManager
     ];
     
     # Environment Aliases
@@ -79,10 +81,6 @@
     #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     #  wget
       git
-      gh
-      #temp
-      yt-dlp
-      antigravity-cli
     ];
 
     # Some programs need SUID wrappers, can be configured further or are
