@@ -5,6 +5,7 @@
       self.homeModules.neovim
       self.homeModules.firefox
       self.homeModules.zsh
+      self.homeModules.tmux
     ];
 
     home.username = "nixx";

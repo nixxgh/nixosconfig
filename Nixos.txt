@@ -11,9 +11,9 @@
 - [x] Greeter (SDDM display manager)
 - [x] Maintenance & GC (Automatic weekly cleanup, store deduplication, and nixclean alias)
 - [x] ZSH Shell (Default shell, autosuggestions, syntax highlighting, Starship prompt)
+- [x] Tmux (Terminal multiplexer with vim navigation & mouse support)
 
 ## Pending / To Do
-- [ ] Tmux (Terminal multiplexer)
 - [ ] Yazi (Terminal file manager + preview plugins)
 - [ ] Fastfetch (System information display)
 - [ ] Zen Browser (Browser installation & configuration)

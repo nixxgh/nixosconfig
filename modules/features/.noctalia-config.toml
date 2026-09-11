@@ -38,8 +38,18 @@ widget_order = [ "lockscreen-login-box@eDP-1" ]
         show_unlock_hint = true
         show_weather = true
 
+[theme]
+builtin = "Ayu"
+community_palette = "Ayu Blue"
+mode = "dark"
+source = "builtin"
+wallpaper_scheme = "m3-content"
+
 [wallpaper.default]
-path = "/nix/store/l0gbsjsxk46zy1lpdha2j1cl4ljj7nj1-noctalia-5.0.0/share/noctalia/assets/noctalia-wallpaper.png"
+path = "color:#000000"
 
 [wallpaper.last]
-path = "/nix/store/l0gbsjsxk46zy1lpdha2j1cl4ljj7nj1-noctalia-5.0.0/share/noctalia/assets/noctalia-wallpaper.png"
+path = "color:#000000"
+
+[wallpaper.monitors.eDP-1]
+path = "color:#000000"
