@@ -73,6 +73,19 @@
         nixpkgs.config.allowUnfree = true;
         environment.systemPackages = with pkgs; [];
 
+        # Fonts
+        fonts = {
+          packages = with pkgs; [
+            nerd-fonts.jetbrains-mono
+          ];
+          fontconfig = {
+            enable = true;
+            defaultFonts = {
+              monospace = [ "JetBrainsMono Nerd Font" "DejaVu Sans Mono" ];
+            };
+          };
+        };
+
         # Root Daemons
         virtualisation.docker.enable = true;
 
