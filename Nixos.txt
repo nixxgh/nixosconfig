@@ -12,9 +12,9 @@
 - [x] Maintenance & GC (Automatic weekly cleanup, store deduplication, and nixclean alias)
 - [x] ZSH Shell (Default shell, autosuggestions, syntax highlighting, Starship prompt)
 - [x] Tmux (Terminal multiplexer with vim navigation & mouse support)
+- [x] Yazi (Terminal file manager + rich preview plugins & shell integration)
 
 ## Pending / To Do
-- [ ] Yazi (Terminal file manager + preview plugins)
 - [ ] Fastfetch (System information display)
 - [ ] Zen Browser (Browser installation & configuration)
 - [ ] Tailscale (Mesh VPN service)

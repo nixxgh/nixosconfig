@@ -21,6 +21,7 @@
         # Open new windows and splits in the current working directory
         bind c new-window -c "#{pane_current_path}"
         bind | split-window -h -c "#{pane_current_path}"
+        bind \\ split-window -h -c "#{pane_current_path}"
         bind - split-window -v -c "#{pane_current_path}"
         unbind '"'
         unbind %
@@ -37,6 +38,11 @@
         # Set 24-bit true color and italics support
         set -as terminal-features ",xterm-256color:RGB"
         set -as terminal-features ",alacritty:RGB"
+
+        # Allow image passthrough for terminal tools like Yazi
+        set -g allow-passthrough on
+        set -ga update-environment TERM
+        set -ga update-environment TERM_PROGRAM
 
         # Clean, minimal status bar
         set -g status-position bottom

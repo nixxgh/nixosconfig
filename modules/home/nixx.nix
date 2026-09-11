@@ -6,6 +6,7 @@
       self.homeModules.firefox
       self.homeModules.zsh
       self.homeModules.tmux
+      self.homeModules.yazi
     ];
 
     home.username = "nixx";
