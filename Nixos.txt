@@ -9,6 +9,7 @@
 - [x] Noctalia (Shell / bar + auto-export on shutdown hook)
 - [x] Home Manager (Dendritic integration in modules/home/nixx.nix)
 - [x] Greeter (SDDM display manager)
+- [x] Maintenance & GC (Automatic weekly cleanup, store deduplication, and nixclean alias)
 
 ## Pending / To Do
 - [ ] ZSH Shell (Default shell, plugins, prompt, aliases)
