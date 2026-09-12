@@ -25,6 +25,11 @@
 - [x] Wake-on-LAN (Wired Ethernet): Declarative systemd link, NetworkManager connection config, dispatcher scripts, udev rules, and boot service for eno1 interface
 
 ## Pending / To Do
-(All initial roadmap items completed!)
+- [ ] Remote Wake-on-LAN Relay Bridge (Hardware Project):
+  - Use an old Android phone or SBC (Raspberry Pi / micro-server) connected 24/7 to home Wi-Fi.
+  - Run Tailscale + Termux (or a lightweight Python HTTP webhook) to act as a bridge between cellular WAN requests and the local L2 broadcast domain.
+  - Wire to broadcast the magic packet to `eno1` (MAC: `14:cb:19:c4:b4:e5`) on-demand.
+  - Implement battery preservation (5W slow charging, battery protection limit at ~80%, or smart plug schedule).
+
 
 
