@@ -1,6 +1,7 @@
 { self, inputs, ... }: {
   flake.nixosModules.ssh = { config, pkgs, lib, ... }: let
     niriBin = "${config.programs.niri.package}/bin/niri";
+    gtklockBin = "${pkgs.gtklock}/bin/gtklock";
     swaylockBin = "${pkgs.swaylock-effects}/bin/swaylock";
 
     autounlockScript = pkgs.writeShellScriptBin "autounlock" ''
@@ -10,7 +11,6 @@
         exit 1
       fi
 
-      # Always ensure temporary autologin config is cleaned up on exit or abort
       trap 'rm -f /etc/sddm.conf.d/zz-autologin.conf' EXIT INT TERM
 
       # Check if Niri session is already running
@@ -22,68 +22,80 @@
         fi
       done
 
-      # Toggle behavior: If Niri is already active, log out back to SDDM
-      if [ -n "$NIRI_SOCK" ]; then
-        echo "==> Niri session is currently active. Logging out..."
-        rm -f /etc/sddm.conf.d/zz-autologin.conf
-        sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$NIRI_SOCK" ${niriBin} msg action quit --skip-confirmation 2>/dev/null || true
-
-        # Wait for Niri compositor to terminate cleanly
-        for i in $(seq 1 25); do
-          if ! pgrep -u nixx -x niri >/dev/null 2>&1; then
-            break
-          fi
-          sleep 0.2
-        done
-
-        # If Niri is still lingering, stop its user unit
-        if pgrep -u nixx -x niri >/dev/null 2>&1; then
-          sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 systemctl --user stop niri.service 2>/dev/null || true
-          sleep 0.5
-        fi
-
-        # Restart display manager to ensure a fresh, clean SDDM login greeter on screen
-        systemctl restart display-manager
-        echo "🔒 Logged out. SDDM login screen is now active."
-        exit 0
-      fi
-
-      # If Niri is not active: Log in to Niri session
-      echo "==> [1/3] Writing temporary SDDM autologin configuration..."
-      mkdir -p /etc/sddm.conf.d
-      cat << 'AUTOCONF' > /etc/sddm.conf.d/zz-autologin.conf
+      # If Niri is not running, log in past SDDM to launch the desktop session & Sunshine
+      if [ -z "$NIRI_SOCK" ]; then
+        echo "==> [1/3] Bypassing SDDM to launch desktop session..."
+        mkdir -p /etc/sddm.conf.d
+        cat << 'AUTOCONF' > /etc/sddm.conf.d/zz-autologin.conf
 [Autologin]
 User=nixx
 Session=niri.desktop
 Relogin=false
 AUTOCONF
 
-      echo "==> [2/3] Restarting display-manager to initiate Niri session..."
-      systemctl restart display-manager
+        systemctl restart display-manager
 
-      echo "==> [3/3] Waiting for Niri compositor and IPC socket to be ready..."
-      for i in $(seq 1 40); do
-        for s in /run/user/1000/niri.*.sock; do
-          if [ -S "$s" ] && sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$s" ${niriBin} msg version >/dev/null 2>&1; then
-            NIRI_SOCK="$s"
-            break 2
-          fi
+        echo "==> [2/3] Waiting for Niri and Sunshine to initialize..."
+        for i in $(seq 1 40); do
+          for s in /run/user/1000/niri.*.sock; do
+            if [ -S "$s" ] && sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$s" ${niriBin} msg version >/dev/null 2>&1; then
+              NIRI_SOCK="$s"
+              break 2
+            fi
+          done
+          sleep 0.5
         done
-        sleep 0.5
-      done
 
-      # Clean up autologin immediately so future reboots/logouts stay at SDDM
-      rm -f /etc/sddm.conf.d/zz-autologin.conf
+        rm -f /etc/sddm.conf.d/zz-autologin.conf
 
-      if [ -z "$NIRI_SOCK" ] || [ ! -S "$NIRI_SOCK" ]; then
-        echo "❌ Error: Timed out waiting for responsive Niri socket in /run/user/1000"
-        exit 1
+        if [ -z "$NIRI_SOCK" ] || [ ! -S "$NIRI_SOCK" ]; then
+          echo "❌ Error: Timed out waiting for responsive Niri socket in /run/user/1000"
+          exit 1
+        fi
+        sleep 1
+      fi
+
+      # Immediately lock back up with the login screen
+      echo "==> [3/3] Engaging login screen..."
+      if ! pgrep -x gtklock >/dev/null 2>&1; then
+        sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$NIRI_SOCK" ${niriBin} msg action spawn -- ${gtklockBin} -d
       fi
 
       echo ""
-      echo "✅ Success! Niri is active and unlocked (Sunshine is streaming)."
-      echo "📱 You can now connect via Moonlight or use your desktop directly."
-      echo "💡 Tip: Run 'sudo autounlock' again anytime to log out back to SDDM."
+      echo "✅ Success! Sunshine is streaming, and the screen is locked with the login prompt."
+      echo "📱 You can now connect via Moonlight and enter your password to unlock."
+    '';
+
+    autologoutScript = pkgs.writeShellScriptBin "autologout" ''
+      set -e
+      if [ "$EUID" -ne 0 ]; then
+        echo "❌ Please run with sudo: sudo autologout"
+        exit 1
+      fi
+
+      rm -f /etc/sddm.conf.d/zz-autologin.conf
+
+      for s in /run/user/1000/niri.*.sock; do
+        if [ -S "$s" ]; then
+          sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$s" ${niriBin} msg action quit --skip-confirmation 2>/dev/null || true
+          break
+        fi
+      done
+
+      for i in $(seq 1 25); do
+        if ! pgrep -u nixx -x niri >/dev/null 2>&1; then
+          break
+        fi
+        sleep 0.2
+      done
+
+      if pgrep -u nixx -x niri >/dev/null 2>&1; then
+        sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 systemctl --user stop niri.service 2>/dev/null || true
+        sleep 0.5
+      fi
+
+      systemctl restart display-manager
+      echo "🔒 Logged out. SDDM login screen is now active."
     '';
 
     autolockScript = pkgs.writeShellScriptBin "autolock" ''
@@ -104,17 +116,15 @@ AUTOCONF
         exit 1
       fi
 
-      if pgrep -x swaylock >/dev/null; then
+      if pgrep -x gtklock >/dev/null; then
         echo "ℹ️ Screen is already locked."
         exit 0
       fi
 
       if [ "$USER" = "nixx" ]; then
-        env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$NIRI_SOCK" ${niriBin} msg action spawn -- \
-          ${swaylockBin} -f -e -l -c 1e1e2e --screenshots --clock --indicator --effect-blur 7x5
+        env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$NIRI_SOCK" ${niriBin} msg action spawn -- ${gtklockBin} -d
       else
-        sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$NIRI_SOCK" ${niriBin} msg action spawn -- \
-          ${swaylockBin} -f -e -l -c 1e1e2e --screenshots --clock --indicator --effect-blur 7x5
+        sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$NIRI_SOCK" ${niriBin} msg action spawn -- ${gtklockBin} -d
       fi
       echo "🔒 Lockscreen engaged."
     '';
@@ -181,7 +191,8 @@ AUTOCONF
       openFirewall = true;
     };
 
-    # PAM configuration for swaylock password validation
+    # PAM configuration for lockscreen password validation
+    security.pam.services.gtklock = {};
     security.pam.services.swaylock = {};
 
     # Automatically set NIRI_SOCKET and WAYLAND_DISPLAY in interactive shells (e.g. over SSH)
@@ -199,8 +210,10 @@ AUTOCONF
 
     # System utilities for remote access & session control
     environment.systemPackages = [
+      pkgs.gtklock
       pkgs.swaylock-effects
       autounlockScript
+      autologoutScript
       autolockScript
       screenOffScript
       screenOnScript
