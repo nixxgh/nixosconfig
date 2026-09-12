@@ -138,6 +138,7 @@ sudo nixos-rebuild switch --flake .#myMachine
 | Command | Action |
 | :--- | :--- |
 | `rebuild` | Auto-stages, commits, pushes git changes, and runs `nixos-rebuild switch --flake .#myMachine` |
+| `update` | Updates all flake inputs, verifies with an isolated test-build, and runs `rebuild` |
 | `ncupdate` | Exports live Noctalia configuration directly to `modules/features/.noctalia-config.toml` |
 | `nixclean` | Runs user and system garbage collection and optimizes store hard links |
 | `ff` | Launches Fastfetch system information summary |

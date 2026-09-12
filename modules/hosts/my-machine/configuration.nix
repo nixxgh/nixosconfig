@@ -20,6 +20,7 @@
         # Environment Aliases
         environment.shellAliases = {
           rebuild = "(cd /home/nixx/myNixOS && git add . && (git diff --cached --quiet || (git commit -m 'no comment by user' && (git push || echo '⚠️ git push failed, continuing locally...')))) && sudo nixos-rebuild switch --flake /home/nixx/myNixOS#myMachine";
+          update = "(cd /home/nixx/myNixOS && nix flake update && nix build .#nixosConfigurations.myMachine.config.system.build.toplevel --no-link) && rebuild";
           ncupdate = "nix run nixpkgs#noctalia -- config export > ~/myNixOS/modules/features/.noctalia-config.toml " +
                      "&& echo 'stage and commit myNixOS, to keep tree clean!'";
           nixclean = "nix-collect-garbage -d && sudo nix-collect-garbage -d && nix store optimise";
