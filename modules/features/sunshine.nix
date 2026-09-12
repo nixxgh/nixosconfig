@@ -8,11 +8,6 @@
       openFirewall = true;    # Opens Sunshine streaming & web UI ports
     };
 
-    # Moonlight Qt client for connecting to other hosts
-    environment.systemPackages = with pkgs; [
-      moonlight-qt
-    ];
-
     # Enable input and uinput groups for virtual gamepad/mouse emulation
     users.users.nixx.extraGroups = [ "input" "uinput" ];
 
