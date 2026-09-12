@@ -41,7 +41,7 @@
         layout."background-color" = "#000000";
        
         binds = {
-          "Mod+S".spawn-sh = "${lib.getExe self'.packages.myNoctalia} ipc call launcher toggle";
+          "Mod+S".spawn-sh = "${lib.getExe self'.packages.myNoctalia} msg panel-toggle launcher";
           "Mod+Return".spawn-sh = lib.getExe pkgs.alacritty;
           "Mod+Q".close-window = {};
           "Mod+Shift+Slash".show-hotkey-overlay = {};
