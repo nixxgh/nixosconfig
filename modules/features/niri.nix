@@ -79,6 +79,48 @@
           "Mod+Shift+F".toggle-window-floating = {};
           "Mod+Space".switch-focus-between-floating-and-tiling = {};
           "Mod+Tab".toggle-overview = {};
+
+          # Media and Hardware Keys (Universal for Mac & PC keyboards)
+          "XF86AudioRaiseVolume" = _: {
+            props.allow-when-locked = true;
+            content.spawn-sh = "${pkgs.wireplumber}/bin/wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+";
+          };
+          "XF86AudioLowerVolume" = _: {
+            props.allow-when-locked = true;
+            content.spawn-sh = "${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-";
+          };
+          "XF86AudioMute" = _: {
+            props.allow-when-locked = true;
+            content.spawn-sh = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+          };
+          "XF86AudioMicMute" = _: {
+            props.allow-when-locked = true;
+            content.spawn-sh = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+          };
+          "XF86MonBrightnessUp" = _: {
+            props.allow-when-locked = true;
+            content.spawn-sh = "${pkgs.brightnessctl}/bin/brightnessctl set 5%+";
+          };
+          "XF86MonBrightnessDown" = _: {
+            props.allow-when-locked = true;
+            content.spawn-sh = "${pkgs.brightnessctl}/bin/brightnessctl set 5%-";
+          };
+          "XF86AudioPlay" = _: {
+            props.allow-when-locked = true;
+            content.spawn-sh = "${pkgs.playerctl}/bin/playerctl play-pause";
+          };
+          "XF86AudioPause" = _: {
+            props.allow-when-locked = true;
+            content.spawn-sh = "${pkgs.playerctl}/bin/playerctl play-pause";
+          };
+          "XF86AudioNext" = _: {
+            props.allow-when-locked = true;
+            content.spawn-sh = "${pkgs.playerctl}/bin/playerctl next";
+          };
+          "XF86AudioPrev" = _: {
+            props.allow-when-locked = true;
+            content.spawn-sh = "${pkgs.playerctl}/bin/playerctl previous";
+          };
         };
       };
     };
