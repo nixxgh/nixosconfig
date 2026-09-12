@@ -13,7 +13,12 @@
       moonlight-qt
     ];
 
-    # Enable input group for virtual gamepad/mouse emulation
-    users.users.nixx.extraGroups = [ "input" ];
+    # Enable input and uinput groups for virtual gamepad/mouse emulation
+    users.users.nixx.extraGroups = [ "input" "uinput" ];
+
+    # Automatically grant active graphical session access to /dev/uinput via logind
+    services.udev.extraRules = ''
+      KERNEL=="uinput", GROUP="uinput", MODE="0660", OPTIONS+="static_node=uinput", TAG+="uaccess"
+    '';
   };
 }
