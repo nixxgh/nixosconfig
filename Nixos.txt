@@ -14,10 +14,12 @@
 - [x] Tmux (Terminal multiplexer with vim navigation & mouse support)
 - [x] Yazi (Terminal file manager + rich preview plugins & shell integration)
 - [x] Fastfetch (System information display + ff alias)
+- [x] Tailscale (Mesh VPN daemon & firewall routing)
 
 ## Pending / To Do
 - [ ] Zen Browser (Browser installation & configuration)
-- [ ] Tailscale (Mesh VPN service)
 - [ ] Sunshine + Moonlight (Desktop/game streaming)
+- [ ] Niri Navigation: Consider replacing / adding `Mod + HJKL` alongside `Mod + Arrows` for column & workspace navigation
+- [ ] Niri Aesthetics: Change active window focus ring / border highlight to a subtle grey
 
 

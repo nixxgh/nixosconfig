@@ -9,6 +9,7 @@
       self.nixosModules.audio
       self.nixosModules.bluetooth
       self.nixosModules.noctalia
+      self.nixosModules.tailscale
       self.nixosModules.homeManager
 
       # Machine Base Configuration (Chassis)
