@@ -19,6 +19,7 @@
 - [x] SSH (OpenSSH daemon for remote access via Termius & Tailscale)
 
 ## Pending / To Do
+- [ ] Remote Autologin: Setup 'sudo autologin' command via SSH to seamlessly log into SDDM and unlock the physical desktop session without auto-logout or lockscreen complications
 - [ ] Zen Browser (Browser installation & configuration)
 - [ ] Niri Navigation: Consider replacing / adding `Mod + HJKL` alongside `Mod + Arrows` for column & workspace navigation
 - [ ] Niri Aesthetics: Change active window focus ring / border highlight to a subtle grey
