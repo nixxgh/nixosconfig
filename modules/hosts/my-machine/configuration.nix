@@ -10,6 +10,7 @@
       self.nixosModules.bluetooth
       self.nixosModules.noctalia
       self.nixosModules.tailscale
+      self.nixosModules.sunshine
       self.nixosModules.homeManager
 
       # Machine Base Configuration (Chassis)
