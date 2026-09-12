@@ -16,6 +16,7 @@
 - [x] Fastfetch (System information display + ff alias)
 - [x] Tailscale (Mesh VPN daemon & firewall routing)
 - [x] Sunshine + Moonlight (Desktop/game streaming host & client)
+- [x] SSH (OpenSSH daemon + autounlock / autolock / screen-off scripts)
 
 ## Pending / To Do
 - [ ] Zen Browser (Browser installation & configuration)

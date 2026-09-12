@@ -11,6 +11,7 @@
       self.nixosModules.noctalia
       self.nixosModules.tailscale
       self.nixosModules.sunshine
+      self.nixosModules.ssh
       self.nixosModules.homeManager
 
       # Machine Base Configuration (Chassis)
