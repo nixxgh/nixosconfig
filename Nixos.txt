@@ -20,8 +20,11 @@
 - [x] Zen Browser (Managed via Home Manager using zen-browser-flake)
 - [x] Niri Defaults & Aesthetics (Full-width 100% maximized columns, subtle grey focus ring, Mod+HJKL navigation)
 
+- [x] Remote LUKS Disk Unlock (TPM 2.0 Auto-Unlock): Enrolled PCR registers 0+2 for root & swap via systemd-cryptenroll for autonomous boot without password prompts
+- [x] Remote Autologin: Setup 'autologin' / 'autounlock' command via SSH (with NOPASSWD sudo) to seamlessly log into SDDM, initialize Niri, and unlock the physical desktop session cleanly
+- [x] Wake-on-LAN (Wired Ethernet): Declarative systemd link, NetworkManager connection config, dispatcher scripts, udev rules, and boot service for eno1 interface
+
 ## Pending / To Do
-- [ ] Remote LUKS Disk Unlock (Dropbear in Initrd): Configure Dropbear SSH in stage 1 initrd (`boot.initrd.network.ssh`) to remotely unlock encrypted disk over SSH upon boot
-- [ ] Remote Autologin: Setup 'sudo autologin' command via SSH to seamlessly log into SDDM and unlock the physical desktop session without auto-logout or lockscreen complications
+(All initial roadmap items completed!)
 
 
