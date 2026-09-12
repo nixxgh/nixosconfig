@@ -10,7 +10,27 @@
         exit 1
       fi
 
-      echo "==> [1/4] Writing temporary SDDM autologin configuration..."
+      # Check if Niri session is already running
+      NIRI_SOCK=""
+      for s in /run/user/1000/niri.*.sock; do
+        if [ -S "$s" ] && sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$s" ${niriBin} msg version >/dev/null 2>&1; then
+          NIRI_SOCK="$s"
+          break
+        fi
+      done
+
+      # Toggle behavior: If Niri is already active, log out back to SDDM
+      if [ -n "$NIRI_SOCK" ]; then
+        echo "==> Niri session is currently active. Logging out..."
+        rm -f /etc/sddm.conf.d/zz-autologin.conf
+        sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$NIRI_SOCK" ${niriBin} msg action quit 2>/dev/null || true
+        systemctl restart display-manager
+        echo "🔒 Logged out. SDDM login screen is now active."
+        exit 0
+      fi
+
+      # If Niri is not active: Log in to Niri session
+      echo "==> [1/3] Writing temporary SDDM autologin configuration..."
       mkdir -p /etc/sddm.conf.d
       cat << 'AUTOCONF' > /etc/sddm.conf.d/zz-autologin.conf
 [Autologin]
@@ -19,11 +39,10 @@ Session=niri.desktop
 Relogin=false
 AUTOCONF
 
-      echo "==> [2/4] Restarting display-manager to initiate Niri session..."
+      echo "==> [2/3] Restarting display-manager to initiate Niri session..."
       systemctl restart display-manager
 
-      echo "==> [3/4] Waiting for Niri compositor and IPC socket to be ready..."
-      NIRI_SOCK=""
+      echo "==> [3/3] Waiting for Niri compositor and IPC socket to be ready..."
       for i in $(seq 1 40); do
         for s in /run/user/1000/niri.*.sock; do
           if [ -S "$s" ] && sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$s" ${niriBin} msg version >/dev/null 2>&1; then
@@ -42,14 +61,10 @@ AUTOCONF
         exit 1
       fi
 
-      echo "==> [4/4] Engaging lockscreen in active session..."
-      sleep 1
-      sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$NIRI_SOCK" ${niriBin} msg action spawn -- \
-        ${swaylockBin} -f -e -l -c 1e1e2e --screenshots --clock --indicator --effect-blur 7x5
-
       echo ""
-      echo "✅ Success! Niri is active, screen is locked, and Sunshine is streaming."
-      echo "📱 You can now open Moonlight on your phone to connect!"
+      echo "✅ Success! Niri is active and unlocked (Sunshine is streaming)."
+      echo "📱 You can now connect via Moonlight or use your desktop directly."
+      echo "💡 Tip: Run 'sudo autounlock' again anytime to log out back to SDDM."
     '';
 
     autolockScript = pkgs.writeShellScriptBin "autolock" ''
