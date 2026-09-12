@@ -60,21 +60,13 @@
           "Mod+Shift+Slash".show-hotkey-overlay = {};
           "Mod+Shift+E".quit = {};
 
-          # Column & Workspace Focus (Arrows + HJKL)
-          "Mod+Left".focus-column-left = {};
-          "Mod+Right".focus-column-right = {};
-          "Mod+Up".focus-workspace-up = {};
-          "Mod+Down".focus-workspace-down = {};
+          # Column & Workspace Focus (Vim HJKL)
           "Mod+H".focus-column-left = {};
           "Mod+L".focus-column-right = {};
           "Mod+K".focus-workspace-up = {};
           "Mod+J".focus-workspace-down = {};
 
-          # Move Columns & Workspaces (Ctrl + Arrows / HJKL)
-          "Mod+Ctrl+Left".move-column-left = {};
-          "Mod+Ctrl+Right".move-column-right = {};
-          "Mod+Ctrl+up".move-column-to-workspace-up = {};
-          "Mod+Ctrl+down".move-column-to-workspace-down = {};
+          # Move Columns & Workspaces (Vim Ctrl + HJKL)
           "Mod+Ctrl+H".move-column-left = {};
           "Mod+Ctrl+L".move-column-right = {};
           "Mod+Ctrl+K".move-column-to-workspace-up = {};
