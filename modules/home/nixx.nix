@@ -9,6 +9,7 @@
       self.homeModules.yazi
       self.homeModules.fastfetch
       self.homeModules.zen
+      self.homeModules.alacritty
     ];
 
     home.username = "nixx";

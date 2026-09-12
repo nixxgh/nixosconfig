@@ -35,9 +35,10 @@
         bind -n M-Up select-pane -U
         bind -n M-Down select-pane -D
 
-        # Set 24-bit true color and italics support
+        # Set 24-bit true color, italics, and extended keys (CSI u / Kitty protocol)
         set -as terminal-features ",xterm-256color:RGB"
-        set -as terminal-features ",alacritty:RGB"
+        set -as terminal-features ",alacritty:RGB:extkeys"
+        set -s extended-keys on
 
         # Allow image passthrough for terminal tools like Yazi
         set -g allow-passthrough on

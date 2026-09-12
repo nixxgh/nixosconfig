@@ -13,6 +13,11 @@
         ignoreDups = true;
         share = true;
       };
+
+      initContent = ''
+        # Ensure Shift+Enter behaves as regular Enter in shell prompt
+        bindkey '^[[13;2u' accept-line
+      '';
     };
 
     programs.starship = {
