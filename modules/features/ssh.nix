@@ -10,6 +10,9 @@
         exit 1
       fi
 
+      # Always ensure temporary autologin config is cleaned up on exit or abort
+      trap 'rm -f /etc/sddm.conf.d/zz-autologin.conf' EXIT INT TERM
+
       # Check if Niri session is already running
       NIRI_SOCK=""
       for s in /run/user/1000/niri.*.sock; do
@@ -23,7 +26,23 @@
       if [ -n "$NIRI_SOCK" ]; then
         echo "==> Niri session is currently active. Logging out..."
         rm -f /etc/sddm.conf.d/zz-autologin.conf
-        sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$NIRI_SOCK" ${niriBin} msg action quit 2>/dev/null || true
+        sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 NIRI_SOCKET="$NIRI_SOCK" ${niriBin} msg action quit --skip-confirmation 2>/dev/null || true
+
+        # Wait for Niri compositor to terminate cleanly
+        for i in $(seq 1 25); do
+          if ! pgrep -u nixx -x niri >/dev/null 2>&1; then
+            break
+          fi
+          sleep 0.2
+        done
+
+        # If Niri is still lingering, stop its user unit
+        if pgrep -u nixx -x niri >/dev/null 2>&1; then
+          sudo -u nixx env XDG_RUNTIME_DIR=/run/user/1000 systemctl --user stop niri.service 2>/dev/null || true
+          sleep 0.5
+        fi
+
+        # Restart display manager to ensure a fresh, clean SDDM login greeter on screen
         systemctl restart display-manager
         echo "🔒 Logged out. SDDM login screen is now active."
         exit 0
