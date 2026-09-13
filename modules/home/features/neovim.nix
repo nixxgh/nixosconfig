@@ -68,8 +68,8 @@
           },
         })
 
-        -- Format keymap: <leader>f (Space + f)
-        vim.keymap.set({ 'n', 'v' }, '<leader>f', function()
+        -- Format keymap: <leader>cf (Code Format)
+        vim.keymap.set({ 'n', 'v' }, '<leader>cf', function()
           require('conform').format({
             lsp_fallback = true,
             async = false,
