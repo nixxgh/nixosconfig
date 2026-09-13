@@ -36,6 +36,15 @@
         boot.initrd.luks.devices."luks-68a68627-8cc4-4132-9267-1695eba4cc48".device =
           "/dev/disk/by-uuid/68a68627-8cc4-4132-9267-1695eba4cc48";
 
+        # Hibernation / Resume from Swap
+        boot.resumeDevice = "/dev/disk/by-uuid/1b011439-393c-4a66-8cc9-3fc39a376733";
+
+        # Power Management (Hibernate on Lid Close)
+        services.logind.settings.Login = {
+          HandleLidSwitch = "hibernate";
+          HandleLidSwitchExternalPower = "hibernate";
+        };
+
         # Networking
         networking.hostName = "nixos";
         networking.networkmanager.enable = true;
