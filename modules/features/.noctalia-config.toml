@@ -14,7 +14,7 @@ pre_action_fade_seconds = 2.0
     enabled = true
     locked_timeout = 0.0
     resume_command = ""
-    timeout = 300.0
+    timeout = 180.0
 
     [idle.behavior.lock-and-suspend]
     action = "lock_and_suspend"
