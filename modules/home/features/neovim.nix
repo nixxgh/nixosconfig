@@ -56,14 +56,12 @@
           }
         }
 
-        -- Tree-sitter Highlighting & Indentation
-        require('nvim-treesitter.configs').setup({
-          highlight = {
-            enable = true,
-          },
-          indent = {
-            enable = true,
-          },
+        -- Tree-sitter Highlighting & Indentation (Native in Neovim 0.10+)
+        vim.api.nvim_create_autocmd('FileType', {
+          pattern = '*',
+          callback = function()
+            pcall(vim.treesitter.start)
+          end,
         })
 
         -- Telescope Keymaps
