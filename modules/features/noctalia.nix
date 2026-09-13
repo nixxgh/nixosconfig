@@ -9,7 +9,9 @@
         Type = "oneshot";
         RemainAfterExit = true;
         ExecStop = "${pkgs.writeShellScript "noctalia-export" ''
-          ${lib.getExe self.packages.${pkgs.stdenv.hostPlatform.system}.myNoctalia} config export > /home/nixx/myNixOS/modules/features/.noctalia-config.toml 2>/dev/null || true
+          ${
+            lib.getExe self.packages.${pkgs.stdenv.hostPlatform.system}.myNoctalia
+          } config export > /home/nixx/myNixOS/modules/features/.noctalia-config.toml 2>/dev/null || true
         ''}";
       };
     };
@@ -22,7 +24,7 @@
       # override the default package with the new v5 beta flake
       package = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
       settings = builtins.fromTOML (builtins.readFile ./.noctalia-config.toml);
-      
+
     };
 
   };

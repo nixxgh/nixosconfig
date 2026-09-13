@@ -21,8 +21,9 @@
         environment.shellAliases = {
           rebuild = "(cd /home/nixx/myNixOS && git add . && (git diff --cached --quiet || (git commit -m 'no comment by user' && (git push || echo '⚠️ git push failed, continuing locally...')))) && sudo nixos-rebuild switch --flake /home/nixx/myNixOS#myMachine";
           update = "(cd /home/nixx/myNixOS && nix flake update && nix build .#nixosConfigurations.myMachine.config.system.build.toplevel --no-link) && rebuild";
-          ncupdate = "nix run nixpkgs#noctalia -- config export > ~/myNixOS/modules/features/.noctalia-config.toml " +
-                     "&& echo 'stage and commit myNixOS, to keep tree clean!'";
+          ncupdate =
+            "nix run nixpkgs#noctalia -- config export > ~/myNixOS/modules/features/.noctalia-config.toml "
+            + "&& echo 'stage and commit myNixOS, to keep tree clean!'";
           nixclean = "nix-collect-garbage -d && sudo nix-collect-garbage -d && nix store optimise";
           ff = "fastfetch";
         };
@@ -32,7 +33,8 @@
         boot.loader.efi.canTouchEfiVariables = true;
 
         # Disk Encryption (LUKS)
-        boot.initrd.luks.devices."luks-68a68627-8cc4-4132-9267-1695eba4cc48".device = "/dev/disk/by-uuid/68a68627-8cc4-4132-9267-1695eba4cc48";
+        boot.initrd.luks.devices."luks-68a68627-8cc4-4132-9267-1695eba4cc48".device =
+          "/dev/disk/by-uuid/68a68627-8cc4-4132-9267-1695eba4cc48";
 
         # Networking
         networking.hostName = "nixos";
@@ -71,13 +73,17 @@
           isNormalUser = true;
           description = "nixx";
           shell = pkgs.zsh;
-          extraGroups = [ "networkmanager" "wheel" "docker" ];
-          packages = with pkgs; [];
+          extraGroups = [
+            "networkmanager"
+            "wheel"
+            "docker"
+          ];
+          packages = with pkgs; [ ];
         };
 
         # System Packages & Unfree License
         nixpkgs.config.allowUnfree = true;
-        environment.systemPackages = with pkgs; [];
+        environment.systemPackages = with pkgs; [ ];
 
         # Fonts
         fonts = {
@@ -87,7 +93,10 @@
           fontconfig = {
             enable = true;
             defaultFonts = {
-              monospace = [ "JetBrainsMono Nerd Font" "DejaVu Sans Mono" ];
+              monospace = [
+                "JetBrainsMono Nerd Font"
+                "DejaVu Sans Mono"
+              ];
             };
           };
         };
@@ -96,7 +105,10 @@
         virtualisation.docker.enable = true;
 
         # Nix Settings & Maintenance
-        nix.settings.experimental-features = [ "nix-command" "flakes" ];
+        nix.settings.experimental-features = [
+          "nix-command"
+          "flakes"
+        ];
         nix.settings.auto-optimise-store = true;
         nix.gc = {
           automatic = true;
