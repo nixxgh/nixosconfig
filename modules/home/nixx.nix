@@ -17,6 +17,7 @@
         self.homeModules.fastfetch
         self.homeModules.zen
         self.homeModules.alacritty
+        self.homeModules.direnv
       ];
 
       home.username = "nixx";
