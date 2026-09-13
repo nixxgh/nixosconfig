@@ -4,6 +4,34 @@ position = "bottom"
 [location]
 auto_locate = true
 
+[idle]
+behavior_order = [ "lock", "screen-off", "lock-and-suspend" ]
+pre_action_fade_seconds = 2.0
+
+    [idle.behavior.lock]
+    action = "lock"
+    command = ""
+    enabled = true
+    locked_timeout = 0.0
+    resume_command = ""
+    timeout = 300.0
+
+    [idle.behavior.lock-and-suspend]
+    action = "lock_and_suspend"
+    command = ""
+    enabled = false
+    locked_timeout = 0.0
+    resume_command = ""
+    timeout = 900.0
+
+    [idle.behavior.screen-off]
+    action = "screen_off"
+    command = ""
+    enabled = false
+    locked_timeout = 0.0
+    resume_command = ""
+    timeout = 660.0
+
 [lockscreen_widgets]
 enabled = false
 schema_version = 2
