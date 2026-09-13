@@ -113,8 +113,6 @@
         end, { desc = 'Format buffer with nixfmt/prettier' })
 
         -- LSP Configuration & Keymaps
-        local lspconfig = require('lspconfig')
-
         vim.diagnostic.config({
           virtual_text = true,
           signs = true,
@@ -138,7 +136,7 @@
         })
 
         -- Nix Language Server (nixd)
-        lspconfig.nixd.setup({
+        vim.lsp.config('nixd', {
           settings = {
             nixd = {
               formatting = {
@@ -148,10 +146,8 @@
           },
         })
 
-        -- Web Language Servers (Astro, TypeScript, Tailwind CSS)
-        lspconfig.astro.setup({})
-        lspconfig.ts_ls.setup({})
-        lspconfig.tailwindcss.setup({})
+        -- Enable Language Servers (Neovim 0.11+ native LSP)
+        vim.lsp.enable({ 'nixd', 'astro', 'ts_ls', 'tailwindcss' })
       '';
     };
   };
