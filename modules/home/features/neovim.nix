@@ -55,6 +55,16 @@
           }
         }
 
+        -- Tree-sitter Highlighting & Indentation
+        require('nvim-treesitter.configs').setup({
+          highlight = {
+            enable = true,
+          },
+          indent = {
+            enable = true,
+          },
+        })
+
         -- Telescope Keymaps
         local builtin = require('telescope.builtin')
         vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Find files' })
