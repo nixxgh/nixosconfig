@@ -5,6 +5,10 @@
       fd
       nixfmt
       nixd
+      prettier
+      astro-language-server
+      typescript-language-server
+      tailwindcss-language-server
     ];
 
     programs.neovim = {
@@ -57,13 +61,23 @@
         vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Live grep' })
         vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Find buffers' })
 
-        -- Conform (Formatting with nixfmt)
+        -- Conform (Formatting with nixfmt & prettier)
         require('conform').setup({
           formatters_by_ft = {
             nix = { "nixfmt" },
+            javascript = { "prettier" },
+            typescript = { "prettier" },
+            javascriptreact = { "prettier" },
+            typescriptreact = { "prettier" },
+            astro = { "prettier" },
+            css = { "prettier" },
+            html = { "prettier" },
+            json = { "prettier" },
+            jsonc = { "prettier" },
+            markdown = { "prettier" },
           },
           format_on_save = {
-            timeout_ms = 500,
+            timeout_ms = 1000,
             lsp_fallback = true,
           },
         })
@@ -73,9 +87,9 @@
           require('conform').format({
             lsp_fallback = true,
             async = false,
-            timeout_ms = 500,
+            timeout_ms = 1000,
           })
-        end, { desc = 'Format buffer with nixfmt' })
+        end, { desc = 'Format buffer with nixfmt/prettier' })
 
         -- LSP Configuration & Keymaps
         local lspconfig = require('lspconfig')
@@ -112,6 +126,11 @@
             },
           },
         })
+
+        -- Web Language Servers (Astro, TypeScript, Tailwind CSS)
+        lspconfig.astro.setup({})
+        lspconfig.ts_ls.setup({})
+        lspconfig.tailwindcss.setup({})
       '';
     };
   };
