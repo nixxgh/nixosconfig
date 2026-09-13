@@ -146,6 +146,63 @@ sudo nixos-rebuild switch --flake .#myMachine
 
 ---
 
+## ⌨️ Application-Specific Keybindings
+
+### 1. Neovim (`nvim`)
+* **Leader Key**: `<Space>`
+
+| Keybinding | Mode | Action | Description |
+| :--- | :--- | :--- | :--- |
+| `<leader>cf` | Normal, Visual | Format Code | Formats current buffer/selection using `conform.nvim` (`nixfmt` for Nix, `prettier` for Astro/TS/JS/CSS) |
+| `<leader>ff` | Normal | Find Files | Telescope fuzzy file finder across project |
+| `<leader>fg` | Normal | Live Grep | Telescope ripgrep text search across all project files |
+| `<leader>fb` | Normal | Buffers | Telescope open buffer list |
+| `K` | Normal | LSP Hover | Displays type definitions, signatures, and documentation in a popup |
+| `gd` | Normal | Go to Definition | Jumps to source definition of symbol under cursor |
+| `gr` | Normal | Go to References | Lists all symbol references across the workspace |
+| `<leader>rn` | Normal | Rename Symbol | Project-wide symbol rename via LSP |
+| `<leader>ca` | Normal | Code Action | Quick fixes and refactoring actions |
+| `<leader>d` | Normal | Line Diagnostics | Shows diagnostics/errors for current line in a floating window |
+| `[d` / `]d` | Normal | Diagnostic Nav | Jump to previous / next diagnostic warning or error |
+| `Ctrl + h/j/k/l` | Normal | Pane Navigation | Seamless navigation between Neovim splits and Tmux panes |
+
+> **Note**: `format_on_save` is also enabled by default via `conform.nvim` (with a 1000ms timeout and LSP fallback).
+
+### 2. Niri (Scrollable Tiling Compositor)
+* **Modifier Key (`Mod`)**: `Super` (Windows key)
+
+| Keybinding | Action | Description |
+| :--- | :--- | :--- |
+| `Mod + Return` | Terminal | Opens GPU-accelerated **Alacritty** terminal |
+| `Mod + S` | Launcher | Toggles the **Noctalia** application launcher |
+| `Mod + Q` | Close Window | Closes the currently focused window |
+| `Mod + Shift + E` | Quit Niri | Exits the compositor session back to SDDM |
+| `Mod + Shift + /` | Hotkey Help | Toggles Niri's interactive hotkey cheat-sheet overlay |
+| **Vim Navigation** | | |
+| `Mod + H` | Focus Column Left | Moves focus to the adjacent column on the left |
+| `Mod + L` | Focus Column Right | Moves focus to the adjacent column on the right |
+| `Mod + K` | Focus Workspace Up | Moves focus to the workspace above |
+| `Mod + J` | Focus Workspace Down | Moves focus to the workspace below |
+| **Vim Movement** | | |
+| `Mod + Ctrl + H` | Move Column Left | Shifts the active column left |
+| `Mod + Ctrl + L` | Move Column Right | Shifts the active column right |
+| `Mod + Ctrl + K` | Move Column Up | Moves the active column to the workspace above |
+| `Mod + Ctrl + J` | Move Column Down | Moves the active column to the workspace below |
+| **Layout & Windows** | | |
+| `Mod + F` | Maximize Column | Toggles column maximization |
+| `Mod + R` | Switch Preset Width | Cycles configured column widths |
+| `Mod + ,` (Comma) | Consume/Expel Left | Pulls/pushes adjacent window into current column |
+| `Mod + .` (Period) | Consume/Expel Right | Pulls/pushes adjacent window into current column |
+| `Mod + Shift + F` | Toggle Floating | Toggles focused window between floating and tiling mode |
+| `Mod + Space` | Toggle Float Focus | Switches focus between floating and tiling layers |
+| `Mod + Tab` | Workspace Overview | Toggles bird's-eye workspace and column overview |
+| **Hardware & Media** | | *(Universal keys, enabled even when session is locked)* |
+| `XF86AudioRaiseVolume` / `Lower` | Volume ±5% | Adjusts master volume via WirePlumber (`wpctl`) |
+| `XF86AudioMute` / `MicMute` | Mute Audio / Mic | Toggles audio sink or source mute via WirePlumber |
+| `XF86MonBrightnessUp` / `Down` | Brightness ±5% | Adjusts screen brightness via `brightnessctl` |
+| `XF86AudioPlay` / `Pause` | Play / Pause | Media control via `playerctl` |
+| `XF86AudioNext` / `Prev` | Next / Previous | Track control via `playerctl` |
+
 ## 🔧 Hardware & Host Details
 
 * **Chassis / Hostname**: `nixos` (`myMachine`)
