@@ -3,6 +3,7 @@
     home.packages = with pkgs; [
       ripgrep
       fd
+      nixfmt
     ];
 
     programs.neovim = {
@@ -21,6 +22,7 @@
         lualine-nvim
         nvim-web-devicons
         vim-tmux-navigator
+        conform-nvim
       ];
 
       initLua = ''
@@ -52,6 +54,26 @@
         vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Find files' })
         vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Live grep' })
         vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Find buffers' })
+
+        -- Conform (Formatting with nixfmt)
+        require('conform').setup({
+          formatters_by_ft = {
+            nix = { "nixfmt" },
+          },
+          format_on_save = {
+            timeout_ms = 500,
+            lsp_fallback = true,
+          },
+        })
+
+        -- Format keymap: <leader>cf (Code Format)
+        vim.keymap.set({ 'n', 'v' }, '<leader>cf', function()
+          require('conform').format({
+            lsp_fallback = true,
+            async = false,
+            timeout_ms = 500,
+          })
+        end, { desc = 'Format buffer with nixfmt' })
       '';
     };
   };
