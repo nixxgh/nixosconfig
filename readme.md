@@ -165,6 +165,9 @@ sudo nixos-rebuild switch --flake .#myMachine
 | `<leader>d` | Normal | Line Diagnostics | Shows diagnostics/errors for current line in a floating window |
 | `[d` / `]d` | Normal | Diagnostic Nav | Jump to previous / next diagnostic warning or error |
 | `Ctrl + h/j/k/l` | Normal | Pane Navigation | Seamless navigation between Neovim splits and Tmux panes |
+| `<leader>a` | Normal | Harpoon Add | Pin/bookmark current file into Harpoon |
+| `<leader>h` / `<C-e>` | Normal | Harpoon Menu | Toggle Harpoon quick menu list |
+| `<leader>1` - `<leader>4` | Normal | Harpoon Jump | Jump directly to pinned file 1, 2, 3, or 4 |
 
 > **Note**: `format_on_save` is also enabled by default via `conform.nvim` (with a 1000ms timeout and LSP fallback).
 

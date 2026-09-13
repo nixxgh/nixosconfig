@@ -29,6 +29,7 @@
         vim-tmux-navigator
         conform-nvim
         nvim-lspconfig
+        harpoon2
       ];
 
       initLua = ''
@@ -70,6 +71,18 @@
         vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Find files' })
         vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Live grep' })
         vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Find buffers' })
+
+        -- Harpoon (Fast file pinning & speed dial)
+        local harpoon = require('harpoon')
+        harpoon:setup()
+
+        vim.keymap.set('n', '<leader>a', function() harpoon:list():add() end, { desc = 'Harpoon add file' })
+        vim.keymap.set('n', '<leader>h', function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = 'Harpoon menu' })
+        vim.keymap.set('n', '<C-e>', function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = 'Harpoon menu' })
+        vim.keymap.set('n', '<leader>1', function() harpoon:list():select(1) end, { desc = 'Harpoon file 1' })
+        vim.keymap.set('n', '<leader>2', function() harpoon:list():select(2) end, { desc = 'Harpoon file 2' })
+        vim.keymap.set('n', '<leader>3', function() harpoon:list():select(3) end, { desc = 'Harpoon file 3' })
+        vim.keymap.set('n', '<leader>4', function() harpoon:list():select(4) end, { desc = 'Harpoon file 4' })
 
         -- Conform (Formatting with nixfmt & prettier)
         require('conform').setup({
