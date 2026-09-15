@@ -1,0 +1,12 @@
+# Nix build outputs
+result
+result-*
+
+# Direnv persistent cache
+.direnv/
+
+# Editor & temporary files
+*.swp
+*.swo
+*~
+.DS_Store
