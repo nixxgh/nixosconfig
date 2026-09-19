@@ -26,6 +26,11 @@
             + "&& echo 'stage and commit myNixOS, to keep tree clean!'";
           nixclean = "nix-collect-garbage -d && sudo nix-collect-garbage -d && nix store optimise";
           ff = "fastfetch";
+
+          # JARVIS AI Assistant
+          jarvis = "/home/nixx/projects/jarvis/jarvis-voice";
+          "jarvis-text" = "/home/nixx/projects/jarvis/jarvis-text";
+          j = "/home/nixx/projects/jarvis/jarvis-text";
         };
 
         # Bootloader
