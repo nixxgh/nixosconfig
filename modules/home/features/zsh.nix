@@ -24,6 +24,20 @@
         initContent = ''
           # Ensure Shift+Enter behaves as regular Enter in shell prompt
           bindkey '^[[13;2u' accept-line
+
+          # Antigravity CLI wrapper with voice mode support
+          function agy() {
+            if [[ "$1" == "voice" ]]; then
+              shift
+              touch /tmp/agy_voice_mode
+              echo "🎙️  Antigravity Voice Mode Active (TTS enabled on each prompt)"
+              command agy "$@"
+              rm -f /tmp/agy_voice_mode
+            else
+              rm -f /tmp/agy_voice_mode
+              command agy "$@"
+            fi
+          }
         '';
       };
 
