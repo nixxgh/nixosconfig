@@ -18,6 +18,7 @@
         self.homeModules.zen
         self.homeModules.alacritty
         self.homeModules.direnv
+        self.homeModules.antigravity
       ];
 
       home.username = "nixx";
