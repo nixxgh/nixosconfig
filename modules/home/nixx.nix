@@ -19,6 +19,7 @@
         self.homeModules.alacritty
         self.homeModules.direnv
         self.homeModules.antigravity
+        self.homeModules.noctalia
       ];
 
       home.username = "nixx";
