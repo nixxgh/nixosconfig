@@ -6,14 +6,9 @@
       lib,
       ...
     }:
-    let
-      antigravityApp = pkgs.antigravity-ide.override {
-        commandLineArgs = "--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations";
-      };
-    in
     {
       home.packages = [
-        antigravityApp
+        pkgs.antigravity-ide
       ];
 
       # Quick terminal launchers

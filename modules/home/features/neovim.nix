@@ -146,6 +146,15 @@
           },
         })
 
+        -- Astro Language Server Configuration
+        vim.lsp.config('astro', {
+          init_options = {
+            typescript = {
+              tsdk = vim.fn.getcwd() .. "/node_modules/typescript/lib",
+            },
+          },
+        })
+
         -- Enable Language Servers (Neovim 0.11+ native LSP)
         vim.lsp.enable({ 'nixd', 'astro', 'ts_ls', 'tailwindcss' })
       '';
