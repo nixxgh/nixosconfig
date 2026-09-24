@@ -124,6 +124,7 @@
           "flakes"
         ];
         nix.settings.auto-optimise-store = true;
+        nix.settings.trusted-users = [ "root" "nixx" ];
         nix.gc = {
           automatic = true;
           dates = "weekly";
