@@ -9,10 +9,12 @@
 
 ---
 
-> [!IMPORTANT]
-> ### 💡 Core Architecture vs. Reference Implementation
-> - **The Reusable Framework (The Templates)**: The turnkey templates (`_fleet_template/`, `machines/_template/`, and `users/_template/`) are the true core of this repository. They provide the clean, unopinionated blueprints for deploying new fleets, machines, and user capsules.
-> - **`fleet1/` Is a Live Reference Implementation**: `fleet1/` (with user `nixx` and machine `laptop`) is the author's active personal daily-driver deployment. It serves as a fully functional, production-tested reference example demonstrating how the templates are applied in real life. When adopting or cloning this platform, you can study `fleet1` as an example or replace it entirely with your own fleet domain.
+> [!NOTE]
+> ### 🌟 Looking to Build Your Own Fleet? Start Here:
+> **This repository is the author's active daily-driver workstation (`fleet1`) and serves as the live, battle-tested reference implementation.** It contains personalized dotfiles (Niri, Neovim, Tmux), application suites, and physical hardware configs.
+>
+> - 🚀 **Recommended Starting Point**: If you are building your own fleet or looking for a clean, zero-bloat foundation, please use the official starter framework: **[`nixxgh/nixos-enterprise-fleet`](https://github.com/nixxgh/nixos-enterprise-fleet)**. It provides the pure turnkey scaffolding with zero personal data or technical debt to clean up.
+> - 💻 **Using This Daily-Driver Setup**: You are fully welcome to clone, adapt, or study this configuration directly if you wish to replicate this exact Niri + Neovim environment, provided you abide by the **[CC BY-NC-SA 4.0 License](LICENSE)** (strictly non-commercial use, prominent attribution to `nixx`, and share-alike terms).
 
 ---
 
