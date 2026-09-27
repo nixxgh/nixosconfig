@@ -1,18 +1,16 @@
 { self, inputs, ... }: {
 
   flake.nixosModules.commonHost =
-    { config, pkgs, ... }:
+    { config, pkgs, lib, ... }:
     {
       imports = [
-        # System programs & services
+        # Core system programs & services
         self.nixosModules.niri
         self.nixosModules.sddm
         self.nixosModules.audio
         self.nixosModules.bluetooth
         self.nixosModules.tailscale
-        self.nixosModules.sunshine
         self.nixosModules.ssh
-        self.nixosModules.wakeonlan
         self.nixosModules.homeManager
         self.nixosModules.environmentPackages
         self.nixosModules.fleetUsers
@@ -47,20 +45,9 @@
       # Networking
       networking.networkmanager.enable = true;
 
-      # Time Zone & Localization
-      time.timeZone = "Asia/Kolkata";
-      i18n.defaultLocale = "en_IN";
-      i18n.extraLocaleSettings = {
-        LC_ADDRESS = "en_IN";
-        LC_IDENTIFICATION = "en_IN";
-        LC_MEASUREMENT = "en_IN";
-        LC_MONETARY = "en_IN";
-        LC_NAME = "en_IN";
-        LC_NUMERIC = "en_IN";
-        LC_PAPER = "en_IN";
-        LC_TELEPHONE = "en_IN";
-        LC_TIME = "en_IN";
-      };
+      # Time Zone & Localization (Defaults)
+      time.timeZone = lib.mkDefault "UTC";
+      i18n.defaultLocale = lib.mkDefault "en_US.UTF-8";
 
       # Keyboard
       services.xserver.xkb = {

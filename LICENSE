@@ -1,0 +1,138 @@
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License
+(CC BY-NC-SA 4.0)
+
+Copyright (c) 2026 nixx
+Original Repository: https://github.com/nixxgh/nixosconfig
+
+================================================================================
+AIRTIGHT PLAIN-ENGLISH SUMMARY OF TERMS
+================================================================================
+
+You are free to:
+  • Share — Copy, distribute, and transmit this software/configuration in any medium or format.
+  • Adapt — Remix, transform, and build upon this software/configuration.
+
+Under the following STRICT, MANDATORY terms:
+
+1. ATTRIBUTION (BY):
+   You must give appropriate, prominent credit to "nixx", provide a direct link to
+   the original repository (https://github.com/nixxgh/nixosconfig), and indicate if
+   changes were made. You must do so in a reasonable manner, but not in any way
+   that suggests the licensor endorses you or your use.
+
+2. NON-COMMERCIAL (NC) — STRICT & UNAMBIGUOUS DEFINITION:
+   You may NOT use this material for commercial purposes under any circumstances.
+   "Commercial purposes" explicitly includes, but is not limited to:
+     a) Use within or on behalf of any company, business, startup, enterprise, firm,
+        or for-profit entity.
+     b) Deployment across any corporate, workplace, employee, or contractor machines.
+     c) Reselling, sublicensing, packaging, charging fees for, or generating revenue
+        directly or indirectly from this software or any derivative works.
+     d) Using this architecture or its modules as part of paid IT/DevOps consulting,
+        contracting, commercial support, or proprietary internal platform tooling.
+
+   Personal, educational, hobbyist, and non-profit home-lab use is 100% permitted.
+   Commercial usage requires an explicit, separate written commercial license agreement
+   from the author ("nixx").
+
+3. SHARE-ALIKE (SA):
+   If you remix, transform, modify, or build upon this software, architecture, or
+   configuration, you MUST distribute your contributions under the EXACT SAME license
+   (CC BY-NC-SA 4.0). You may not apply legal terms, restrictive licenses, or
+   technological DRM measures that legally restrict others from doing anything this
+   license permits. All derivative works must preserve full attribution to the original author.
+
+4. MEDIA & CONTENT CREATION CLARIFICATION:
+   Creating public tutorials, blog posts, reviews, or videos discussing or showcasing
+   this repository (including on ad-supported platforms such as YouTube) is fully
+   permitted, provided that:
+     a) Prominent credit to "nixx" is included on-screen or in the description.
+     b) A direct link to https://github.com/nixxgh/nixosconfig is provided.
+     c) The code/configuration itself is not placed behind a paywall.
+
+================================================================================
+ACKNOWLEDGEMENTS & UPSTREAM CREDITS
+================================================================================
+
+This project stands on the shoulders of giants. The architectural composition,
+multi-tenant fleet taxonomy, and blast-radius rebuild pipelines created in this
+repository would not have been possible without the foundational technologies
+created and maintained by the following five authors, organizations, and teams:
+
+1. Eelco Dolstra & the NixOS / Nixpkgs Contributors
+   • Technology : Nix Package Manager, NixOS, and Nixpkgs
+   • License    : MIT License
+   • Impact     : Provided the pure functional package management and declarative
+                  operating system core that makes reproducible infrastructure possible.
+
+2. Robert Helgesson (rycee) & the Home Manager Team (nix-community)
+   • Technology : Home Manager (github.com/nix-community/home-manager)
+   • License    : MIT License
+   • Impact     : Provided the unprivileged user-space and dotfile management framework
+                  that powers our standalone user capsules.
+
+3. Hercules CI & Robert Hensing
+   • Technology : flake-parts (github.com/hercules-ci/flake-parts)
+   • License    : MIT License
+   • Impact     : Provided the modular flake architecture and system abstraction
+                  layer that allows clean separation of concerns across our fleet.
+
+4. BirdeeHub
+   • Technology : nix-wrapper-modules (github.com/BirdeeHub/nix-wrapper-modules)
+   • License    : MIT License
+   • Impact     : Provided the declarative CLI wrapper system that powers our seamless
+                  compositor and terminal runtime bindings.
+
+5. Victor Borja (vic)
+   • Technology : import-tree (github.com/vic/import-tree)
+   • License    : Apache License 2.0
+   • Impact     : Provided the zero-touch recursive filesystem module crawler that
+                  eliminates manual boilerplate and dynamically auto-loads our fleet.
+
+We express our deepest gratitude to these upstream creators for making their core
+engines freely available under permissive open-source licenses.
+
+================================================================================
+LEGAL CODE & STATUTORY PROVISIONS
+================================================================================
+
+By exercising the Licensed Rights (defined below), You accept and agree to be bound
+by the terms and conditions of this Creative Commons Attribution-NonCommercial-ShareAlike
+4.0 International Public License ("Public License"). To the extent this Public License
+may be interpreted as a contract, You are granted the Licensed Rights in consideration
+of Your acceptance of these terms and conditions, and the Licensor grants You such rights
+in consideration of benefits the Licensor receives from making the Licensed Material
+available under these terms and conditions.
+
+Section 1 — Definitions.
+a. Adapted Material means material subject to Copyright and Similar Rights that is
+   derived from or based upon the Licensed Material and in which the Licensed Material
+   is translated, altered, arranged, transformed, or otherwise modified in a manner
+   requiring permission under the Copyright and Similar Rights held by the Licensor.
+b. Commercial means primarily intended for or directed towards commercial advantage
+   or monetary compensation.
+c. Licensor means the individual(s) or entity(ies) granting rights under this
+   Public License: nixx.
+d. Share means to provide material to the public by any means or process that requires
+   permission under the Licensed Rights.
+
+Section 2 — Scope.
+a. License grant. Subject to the terms and conditions of this Public License, the
+   Licensor hereby grants You a worldwide, royalty-free, non-sublicensable,
+   non-exclusive, irrevocable license to exercise the Licensed Rights in the
+   Licensed Material to:
+   1. reproduce and Share the Licensed Material, in whole or in part, for
+      NonCommercial purposes only; and
+   2. produce, reproduce, and Share Adapted Material for NonCommercial purposes only.
+b. Downstream recipients. Every recipient of the Licensed Material or Adapted Material
+   automatically receives an offer from the Licensor to exercise the Licensed Rights
+   under the terms and conditions of this Public License.
+
+Section 3 — Disclaimer of Warranties and Limitation of Liability.
+Unless otherwise separately undertaken by the Licensor, to the extent possible, the
+Licensor offers the Licensed Material as-is and as-available, and makes no representations
+or warranties of any kind concerning the Licensed Material, whether express, implied,
+statutory, or other. In no event will the Licensor be liable to You on any legal theory
+for any direct, special, indirect, incidental, consequential, punitive, exemplary, or
+other losses, costs, expenses, or damages arising out of this Public License or use of
+the Licensed Material.
