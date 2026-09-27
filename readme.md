@@ -14,13 +14,12 @@
 - **Remote Desktop & Game Streaming**: **Sunshine** host server paired with **Moonlight** clients for high-performance, low-latency desktop streaming to phones, tablets, or laptops over Tailscale.
 - **Remote Headless Login**: Lightweight SSH-based `autologin` / `autounlock` script with passwordless sudo permissions to cleanly authenticate SDDM, initialize Niri, and unlock the physical session remotely.
 
-### 2. Wayland Desktop (Niri + Noctalia)
+### 2. Wayland Desktop (Niri)
 
 - **Niri Compositor**: Modern scrollable tiling Wayland compositor configured declaratively via `nix-wrapper-modules`.
 - **Maximized-by-Default Workflow**: Windows and columns open at 100% width and height by default for maximum screen real estate and zero distraction.
 - **Vim-Centric Navigation**: Pure `Mod + HJKL` for column and workspace navigation (arrow key binds removed), plus `Mod + Ctrl + HJKL` for moving columns and workspaces.
 - **Subtle Aesthetics**: Dark `#000000` canvas background with refined Catppuccin-style grey focus rings (`#6c7086`).
-- **Shell & Bar**: **Noctalia** launcher and status bar with automated config export workflows (`ncupdate`).
 - **SDDM Display Manager**: Clean Wayland greeter with legacy X11 desktop sessions and fallback `xterm` removed.
 
 ### 3. Developer & Terminal Environment
@@ -64,8 +63,6 @@ myNixOS/
     │   ├── bluetooth.nix                   # Bluetooth daemon & power defaults
     │   ├── home-manager.nix                # Home Manager integration module
     │   ├── niri.nix                        # Niri compositor config, keybindings, layout
-    │   ├── noctalia.nix                    # Noctalia shell & bar integration
-    │   ├── .noctalia-config.toml           # Exported Noctalia theme & widget configuration
     │   ├── sddm.nix                        # SDDM display manager configuration
     │   ├── ssh.nix                         # OpenSSH server daemon
     │   ├── sunshine.nix                    # Sunshine remote desktop streaming service
@@ -144,7 +141,6 @@ sudo nixos-rebuild switch --flake .#myMachine
 | :------------------------- | :-------------------------------------------------------------------------------------------- |
 | `rebuild`                  | Auto-stages, commits, pushes git changes, and runs `nixos-rebuild switch --flake .#myMachine` |
 | `update`                   | Updates all flake inputs, verifies with an isolated test-build, and runs `rebuild`            |
-| `ncupdate`                 | Exports live Noctalia configuration directly to `modules/features/.noctalia-config.toml`      |
 | `nixclean`                 | Runs user and system garbage collection and optimizes store hard links                        |
 | `ff`                       | Launches Fastfetch system information summary                                                 |
 | `autologin` / `autounlock` | Headless remote unlock script via SSH to initialize graphical session                         |
@@ -184,7 +180,7 @@ sudo nixos-rebuild switch --flake .#myMachine
 | Keybinding                       | Action               | Description                                             |
 | :------------------------------- | :------------------- | :------------------------------------------------------ |
 | `Mod + Return`                   | Terminal             | Opens GPU-accelerated **Alacritty** terminal            |
-| `Mod + S`                        | Launcher             | Toggles the **Noctalia** application launcher           |
+| `Mod + S`                        | Launcher             | _(Currently unbound — pending replacement)_             |
 | `Mod + Q`                        | Close Window         | Closes the currently focused window                     |
 | `Mod + Shift + E`                | Quit Niri            | Exits the compositor session back to SDDM               |
 | `Mod + Shift + /`                | Hotkey Help          | Toggles Niri's interactive hotkey cheat-sheet overlay   |

@@ -9,7 +9,6 @@
     {
       hardware.bluetooth = {
         enable = true;
-        # Turned off so Noctalia can manage the state instead.
         settings = {
           General = {
             Experimental = true;
