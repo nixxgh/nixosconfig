@@ -24,14 +24,14 @@
       environment.shellAliases = {
         # ── 1. Core Architecture Rebuild Pipelines (The Framework) ───────────
         # Full system rebuild (cascading, rebuilds environment + all user spaces)
-        forcerebuildall = "(cd \$HOME/myNixOS && git add . && (git diff --cached --quiet || git commit -m 'no comment by user') && (git pull --rebase || echo '⚠️ git pull failed/offline, continuing locally...') && (git push || echo '⚠️ git push failed, continuing locally...')) && sudo nixos-rebuild switch --flake \$HOME/myNixOS#\${config.networking.hostName}";
+        forcerebuildall = "(cd \$HOME/myNixOS && git add . && (git diff --cached --quiet || git commit -m 'no comment by user') && (git pull --rebase || echo '⚠️ git pull failed/offline, continuing locally...') && (git push || echo '⚠️ git push failed, continuing locally...')) && sudo nixos-rebuild switch --flake \$HOME/myNixOS#${config.networking.hostName}";
 
-        forceupdateall = "(cd \$HOME/myNixOS && (git pull --rebase || echo '⚠️ git pull failed/offline, continuing locally...') && nix flake update && git add flake.lock && (git diff --cached --quiet || (git commit -m 'Update flake.lock' && (git push || echo '⚠️ git push failed, continuing locally...'))) && nix build .#nixosConfigurations.\${config.networking.hostName}.config.system.build.toplevel --no-link) && forcerebuildall";
+        forceupdateall = "(cd \$HOME/myNixOS && (git pull --rebase || echo '⚠️ git pull failed/offline, continuing locally...') && nix flake update && git add flake.lock && (git diff --cached --quiet || (git commit -m 'Update flake.lock' && (git push || echo '⚠️ git push failed, continuing locally...'))) && nix build .#nixosConfigurations.${config.networking.hostName}.config.system.build.toplevel --no-link) && forcerebuildall";
 
         # Environment rebuild (non-cascading, leaves home-manager untouched)
-        rebuildenvironment = "(cd \$HOME/myNixOS && git add . && (git diff --cached --quiet || git commit -m 'no comment by user') && (git pull --rebase || echo '⚠️ git pull failed/offline, continuing locally...') && (git push || echo '⚠️ git push failed, continuing locally...')) && sudo nixos-rebuild switch --flake \$HOME/myNixOS#\${config.networking.hostName}-env";
+        rebuildenvironment = "(cd \$HOME/myNixOS && git add . && (git diff --cached --quiet || git commit -m 'no comment by user') && (git pull --rebase || echo '⚠️ git pull failed/offline, continuing locally...') && (git push || echo '⚠️ git push failed, continuing locally...')) && sudo nixos-rebuild switch --flake \$HOME/myNixOS#${config.networking.hostName}-env";
 
-        updateenvironment = "(cd \$HOME/myNixOS && (git pull --rebase || echo '⚠️ git pull failed/offline, continuing locally...') && nix flake update && git add flake.lock && (git diff --cached --quiet || (git commit -m 'Update flake.lock' && (git push || echo '⚠️ git push failed, continuing locally...'))) && nix build .#nixosConfigurations.\${config.networking.hostName}-env.config.system.build.toplevel --no-link) && rebuildenvironment";
+        updateenvironment = "(cd \$HOME/myNixOS && (git pull --rebase || echo '⚠️ git pull failed/offline, continuing locally...') && nix flake update && git add flake.lock && (git diff --cached --quiet || (git commit -m 'Update flake.lock' && (git push || echo '⚠️ git push failed, continuing locally...'))) && nix build .#nixosConfigurations.${config.networking.hostName}-env.config.system.build.toplevel --no-link) && rebuildenvironment";
 
         # Store & Garbage Collection
         nixclean = "nix-collect-garbage -d && sudo nix-collect-garbage -d && nix store optimise";
