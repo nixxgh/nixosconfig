@@ -127,10 +127,6 @@
                   ;;
               esac
       '';
-
-      autounlockScript = pkgs.writeShellScriptBin "autounlock" ''
-        exec /run/current-system/sw/bin/autologin "$@"
-      '';
     in
     {
       # OpenSSH Server
@@ -146,7 +142,6 @@
       # System packages for remote session control
       environment.systemPackages = [
         autologinScript
-        autounlockScript
       ];
 
       # Allow users in wheel group (e.g. nixx over SSH via Termius) to reboot and power off without password prompts
@@ -191,10 +186,6 @@
             }
             {
               command = "/run/current-system/sw/bin/autologin";
-              options = [ "NOPASSWD" ];
-            }
-            {
-              command = "/run/current-system/sw/bin/autounlock";
               options = [ "NOPASSWD" ];
             }
             {

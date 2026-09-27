@@ -53,33 +53,51 @@ myNixOS/
 └── modules/
     ├── parts.nix                           # flake-parts assembly & host declaration
     │
-    ├── hosts/
-    │   └── my-machine/
-    │       ├── configuration.nix           # Host chassis, aliases, users, bootloader, GC
-    │       └── hardware-configuration.nix  # Kernel modules, mounts, LUKS storage mapping
-    │
-    ├── features/                           # System-level modules & OS services
-    │   ├── audio.nix                       # PipeWire & WirePlumber audio stack
-    │   ├── bluetooth.nix                   # Bluetooth daemon & power defaults
-    │   ├── home-manager.nix                # Home Manager integration module
-    │   ├── niri.nix                        # Niri compositor config, keybindings, layout
-    │   ├── sddm.nix                        # SDDM display manager configuration
-    │   ├── ssh.nix                         # OpenSSH server daemon
-    │   ├── sunshine.nix                    # Sunshine remote desktop streaming service
-    │   ├── tailscale.nix                   # Tailscale mesh VPN integration
-    │   └── wakeonlan.nix                   # Declarative Wake-on-LAN rules (link, udev, nm)
-    │
-    └── home/                               # User-space configuration (Home Manager)
-        ├── nixx.nix                        # User entry point (imports user features)
-        └── features/                       # Modular user application configs
-            ├── fastfetch.nix               # System info banner configuration
-            ├── firefox.nix                 # Secondary web browser
-            ├── git.nix                     # Git identity & global configuration
-            ├── neovim.nix                  # Neovim text editor
-            ├── tmux.nix                    # Tmux terminal multiplexer
-            ├── yazi.nix                    # Yazi terminal file manager
-            ├── zen.nix                     # Zen Browser configuration
-            └── zsh.nix                     # ZSH shell, prompt, and custom aliases
+    └── hosts/                              # ── PHYSICAL HOST & FLEET PROFILES ──
+        └── fleet1/                         # Fleet 1 base profile, users & machines
+            ├── fleet-configuration/        # Fleet 1 environment & system domain
+            │   ├── fleet-configuration.nix # Fleet 1 base (User nixx, fonts, boot, daemons)
+            │   ├── packages.nix            # Fleet system CLI packages
+            │   ├── programs/               # Fleet graphical programs
+            │   │   └── niri.nix            # Niri compositor config & layout
+            │   └── services/               # Fleet system services & daemons
+            │       ├── audio.nix           # PipeWire & WirePlumber audio stack
+            │       ├── bluetooth.nix       # Bluetooth daemon & power defaults
+            │       ├── home-manager.nix    # Home Manager integration module
+            │       ├── sddm.nix            # SDDM display manager configuration
+            │       ├── ssh.nix             # OpenSSH server & remote session control
+            │       ├── sunshine.nix        # Sunshine remote desktop streaming
+            │       ├── tailscale.nix       # Tailscale mesh VPN integration
+            │       └── wakeonlan.nix       # Declarative Wake-on-LAN rules
+            │
+            ├── users/                      # Fleet 1 User Roster (Home Manager)
+            │   ├── nixx/                   # Active user profile: nixx
+            │   │   ├── nixx-configuration.nix # User chassis (identity, rebuildhome, updatehome)
+            │   │   ├── packages.nix        # Userland packages (home.packages)
+            │   │   ├── programs/           # 11 personal dotfiles & app configurations
+            │   │   │   ├── alacritty.nix   # Alacritty terminal emulator
+            │   │   │   ├── antigravity.nix # Antigravity CLI environment
+            │   │   │   ├── direnv.nix      # Direnv shell environment switcher
+            │   │   │   ├── fastfetch.nix   # System info banner configuration
+            │   │   │   ├── firefox.nix     # Web browser
+            │   │   │   ├── git.nix         # Git identity & global configuration
+            │   │   │   ├── neovim.nix      # Neovim text editor
+            │   │   │   ├── tmux.nix        # Tmux terminal multiplexer
+            │   │   │   ├── yazi.nix        # Yazi terminal file manager
+            │   │   │   ├── zen.nix         # Zen Browser configuration
+            │   │   │   └── zsh.nix         # ZSH shell, prompt, and custom aliases
+            │   │   └── services/           # User background daemons
+            │   │
+            │   └── _template/              # ── DORMANT USER TEMPLATE ──
+            │       ├── template-configuration.nix
+            │       ├── packages.nix
+            │       ├── programs/git.nix
+            │       └── services/
+            │
+            └── machines/                   # Physical Fleet 1 Devices
+                └── laptop/                 # Laptop machine profile (#laptop / #laptop-env)
+                    ├── laptop-configuration.nix
+                    └── laptop-hardware-configuration.nix
 ```
 
 ---
@@ -90,26 +108,26 @@ If you are pulling this configuration onto your own system, NixOS makes reproduc
 
 ### 1. Hardware Prerequisites
 
-1. **Hardware Configuration & Disks (`modules/hosts/my-machine/hardware-configuration.nix`)**:
+1. **Hardware Configuration & Disks (`modules/hosts/fleet1/machines/laptop/laptop-hardware-configuration.nix`)**:
    Every machine has different storage UUIDs, disk controllers, and CPU microcode. Generate a clean hardware profile for your target machine:
 
    ```bash
-   nixos-generate-config --show-hardware-config > modules/hosts/my-machine/hardware-configuration.nix
+   nixos-generate-config --show-hardware-config > modules/hosts/fleet1/machines/laptop/laptop-hardware-configuration.nix
    ```
 
-2. **LUKS Disk Encryption (`modules/hosts/my-machine/configuration.nix`)**:
+2. **LUKS Disk Encryption (`modules/hosts/fleet1/machines/laptop/laptop-hardware-configuration.nix`)**:
    This workstation configuration assumes a LUKS-encrypted root volume.
-   - If your system **does not use disk encryption**: remove or comment out the `boot.initrd.luks.devices` declaration in `configuration.nix` (line 34).
+   - If your system **does not use disk encryption**: remove or comment out the `boot.initrd.luks.devices` declaration in `laptop-hardware-configuration.nix`.
    - If your system **uses a different LUKS partition**: update the UUID to match your disk's encrypted partition UUID.
 
-3. **Wake-on-LAN & Networking (`modules/features/wakeonlan.nix`)**:
+3. **Wake-on-LAN & Networking (`modules/hosts/fleet1/fleet-configuration/services/wakeonlan.nix`)**:
    The Wake-on-LAN module is configured specifically for interface `eno1` and MAC `14:cb:19:c4:b4:e5`.
-   - If adopting WoL: update the interface name and MAC address in `modules/features/wakeonlan.nix`.
-   - If not needed: comment out `self.nixosModules.wakeonlan` in `modules/hosts/my-machine/configuration.nix`.
+   - If adopting WoL: update the interface name and MAC address in `modules/hosts/fleet1/fleet-configuration/services/wakeonlan.nix`.
+   - If not needed: comment out `self.nixosModules.wakeonlan` in `modules/hosts/fleet1/fleet-configuration/fleet-configuration.nix`.
 
 4. **Username & Git Identity**:
-   - The primary user account is set to `nixx` in `modules/hosts/my-machine/configuration.nix` and `modules/home/nixx.nix`.
-   - Personal Git identity is configured in `modules/home/features/git.nix`.
+   - The primary user account is configured in `modules/hosts/fleet1/fleet-configuration/fleet-configuration.nix` and `modules/hosts/fleet1/users/nixx/nixx-configuration.nix`.
+   - Personal Git identity is configured in `modules/hosts/fleet1/users/nixx/programs/git.nix`.
 
 ---
 
@@ -121,29 +139,33 @@ git clone https://github.com/nixxgh/myNixOS.git ~/myNixOS
 cd ~/myNixOS
 
 # 2. Extract your machine's hardware configuration
-nixos-generate-config --show-hardware-config > modules/hosts/my-machine/hardware-configuration.nix
+nixos-generate-config --show-hardware-config > modules/hosts/fleet1/machines/laptop/laptop-hardware-configuration.nix
 
 # 3. Adjust LUKS / Network settings as detailed above
-# nano modules/hosts/my-machine/configuration.nix
+# nano modules/hosts/fleet1/machines/laptop/laptop-hardware-configuration.nix
 
 # 4. Dry-build to verify syntax and dependencies
-nix build .#nixosConfigurations.myMachine.config.system.build.toplevel --no-link
+nix build .#nixosConfigurations.laptop.config.system.build.toplevel --no-link
 
 # 5. Apply and switch to the configuration
-sudo nixos-rebuild switch --flake .#myMachine
+sudo nixos-rebuild switch --flake .#laptop
 ```
 
 ---
 
 ## ⌨️ Common Shell Aliases & Commands
 
-| Command                    | Action                                                                                        |
-| :------------------------- | :-------------------------------------------------------------------------------------------- |
-| `rebuild`                  | Auto-stages, commits, pushes git changes, and runs `nixos-rebuild switch --flake .#myMachine` |
-| `update`                   | Updates all flake inputs, verifies with an isolated test-build, and runs `rebuild`            |
+| Command                    | Action                                                                                      |
+| :------------------------- | :------------------------------------------------------------------------------------------ |
+| `rebuildenvironment`       | Rebuilds system environment only (`#laptop-env`), **non-cascading** (leaves user spaces untouched) |
+| `updateenvironment`        | Updates flake inputs and rebuilds system environment only (`#laptop-env`)                  |
+| `forcerebuildall`          | Full atomic rebuild (`#laptop`), **cascading** into all wired user spaces                   |
+| `forceupdateall`           | Updates flake inputs and triggers full cascading rebuild (`#laptop`)                        |
+| `rebuildhome`              | Rebuilds user space only (`home-manager switch --flake .#<user>`), **100% unprivileged / no sudo** |
+| `updatehome`               | Updates flake inputs & rebuilds user space only, **100% unprivileged / no sudo**             |
 | `nixclean`                 | Runs user and system garbage collection and optimizes store hard links                        |
 | `ff`                       | Launches Fastfetch system information summary                                                 |
-| `autologin` / `autounlock` | Headless remote unlock script via SSH to initialize graphical session                         |
+| `autologin`                | Headless remote unlock script via SSH to initialize graphical session                         |
 
 ---
 
@@ -211,7 +233,7 @@ sudo nixos-rebuild switch --flake .#myMachine
 
 ## 🔧 Hardware & Host Details
 
-- **Chassis / Hostname**: `nixos` (`myMachine`)
+- **Chassis / Hostname**: `nixos` (`laptop`)
 - **Architecture**: `x86_64-linux`
 - **File System**: LUKS Encrypted on NVMe with TPM 2.0 auto-unlock
 - **Network Interface**: `eno1` (1GbE wired with WoL enabled)

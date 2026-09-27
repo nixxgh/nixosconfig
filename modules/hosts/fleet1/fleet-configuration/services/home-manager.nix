@@ -16,7 +16,6 @@
         useUserPackages = true;
         backupFileExtension = "backup";
         extraSpecialArgs = { inherit inputs self; };
-        users.nixx = self.homeModules.nixx;
       };
     };
 }

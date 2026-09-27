@@ -14,7 +14,6 @@
       # Quick terminal launchers
       programs.zsh.shellAliases = {
         agui = "antigravity-ide";
-        agy-gui = "antigravity-ide";
       };
     };
 }

@@ -5,6 +5,12 @@
     description = "Home Manager modules exported by the flake";
   };
 
+  options.flake.homeConfigurations = lib.mkOption {
+    type = lib.types.lazyAttrsOf lib.types.anything;
+    default = { };
+    description = "Standalone Home Manager configurations";
+  };
+
   config = {
     systems = [
       "x86_64-linux"
