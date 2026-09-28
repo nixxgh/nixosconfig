@@ -10,6 +10,7 @@
         slurp
         satty
         wl-clipboard
+        libnotify
       ];
     };
 }

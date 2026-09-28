@@ -15,7 +15,18 @@
       ...
     }:
     let
-      screenshotScript = pkgs.writeShellScript "screenshot-satty" ''
+      screenshotQuick = pkgs.writeShellScript "screenshot-quick" ''
+        GEOM=$(${pkgs.slurp}/bin/slurp -d -b "#00000080" -c "#10b981ff" -s "#00000000" -w 2) || exit 0
+        [ -z "$GEOM" ] && exit 0
+        DIR="$HOME/Pictures/Screenshots"
+        mkdir -p "$DIR"
+        FILE="$DIR/Screenshot_$(${pkgs.coreutils}/bin/date +'%Y-%m-%d_%H-%M-%S').png"
+        ${pkgs.grim}/bin/grim -g "$GEOM" "$FILE"
+        ${pkgs.wl-clipboard}/bin/wl-copy -t image/png < "$FILE"
+        ${pkgs.libnotify}/bin/notify-send -i "$FILE" "Screenshot Captured" "Saved to $(basename "$FILE") & copied to clipboard" -a "Screenshot" -t 2000
+      '';
+
+      screenshotSatty = pkgs.writeShellScript "screenshot-satty" ''
         GEOM=$(${pkgs.slurp}/bin/slurp -d -b "#00000080" -c "#10b981ff" -s "#00000000" -w 2) || exit 0
         [ -z "$GEOM" ] && exit 0
         mkdir -p "$HOME/Pictures/Screenshots"
@@ -76,8 +87,10 @@
           binds = {
             "Mod+Return".spawn-sh = lib.getExe pkgs.alacritty;
             "Mod+S".spawn-sh = "${pkgs.procps}/bin/pkill -x fuzzel || ${lib.getExe pkgs.fuzzel}";
-            "Mod+Shift+S".spawn-sh = "${screenshotScript}";
-            "Print".spawn-sh = "${screenshotScript}";
+            "Mod+Shift+S".spawn-sh = "${screenshotQuick}";
+            "Print".spawn-sh = "${screenshotQuick}";
+            "Mod+Alt+S".spawn-sh = "${screenshotSatty}";
+            "Shift+Print".spawn-sh = "${screenshotSatty}";
             "Mod+N".spawn-sh = "${pkgs.swaynotificationcenter}/bin/swaync-client -t -sw";
             "Mod+Alt+L".spawn-sh = "loginctl lock-session";
             "Mod+Q".close-window = { };

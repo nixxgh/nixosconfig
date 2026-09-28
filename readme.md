@@ -465,7 +465,8 @@ cp -r modules/hosts/_fleet_template modules/hosts/fleet2
 | :------------------------------- | :------------------- | :------------------------------------------------------ |
 | `Mod + Return`                   | Terminal             | Opens GPU-accelerated **Alacritty** terminal            |
 | `Mod + S`                        | App Launcher         | Toggles **Fuzzel** application launcher                 |
-| `Mod + Shift + S` / `Print`      | Screen Capture       | Snips region into **Satty** (draw, text, blur, Enter to copy) |
+| `Mod + Shift + S` / `Print`      | Quick Snip           | Select region -> auto-copied to clipboard & saved (zero GUI) |
+| `Mod + Alt + S` / `Shift + Print`| Annotated Capture    | Select region into **Satty** editor (draw, arrows, text, blur) |
 | `Mod + N`                        | Notification Center  | Toggles **SwayNC** notification control center          |
 | `Mod + Q`                        | Close Window         | Closes the currently focused window                     |
 | `Mod + Shift + E`                | Quit Niri            | Exits the compositor session back to SDDM               |
