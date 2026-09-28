@@ -35,6 +35,7 @@
               "network"
               "bluetooth"
               "custom/nightlight"
+              "custom/caffeine"
               "custom/notification"
               "tray"
             ];
@@ -139,6 +140,28 @@
               ''}";
             };
 
+            "custom/caffeine" = {
+              format = "{}";
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.writeShellScript "waybar-caffeine-status" ''
+                if ${pkgs.systemd}/bin/systemctl --user is-active --quiet hypridle; then
+                  echo '{"text":"󰾨","class":"inactive","tooltip":"Caffeine: Inactive (Screen locks after 3m)\nClick to keep screen awake"}'
+                else
+                  echo '{"text":"󰅶","class":"active","tooltip":"Caffeine: Active (Screen lock & sleep inhibited)\nClick to restore normal lock"}'
+                fi
+              ''}";
+              on-click = "${pkgs.writeShellScript "waybar-caffeine-toggle" ''
+                if ${pkgs.systemd}/bin/systemctl --user is-active --quiet hypridle; then
+                  ${pkgs.systemd}/bin/systemctl --user stop hypridle
+                  ${pkgs.libnotify}/bin/notify-send -u low -a "Caffeine" "Caffeine Active" "Idle lock screen and sleep inhibited."
+                else
+                  ${pkgs.systemd}/bin/systemctl --user start hypridle
+                  ${pkgs.libnotify}/bin/notify-send -u low -a "Caffeine" "Caffeine Inactive" "Idle lock screen (3m) restored."
+                fi
+              ''}";
+            };
+
             "custom/notification" = {
               tooltip = false;
               format = "{icon}";
@@ -234,6 +257,18 @@
           }
 
           #custom-nightlight.off {
+            color: #64748b;
+          }
+
+          #custom-caffeine {
+            padding: 0 10px;
+          }
+
+          #custom-caffeine.active {
+            color: #34d399;
+          }
+
+          #custom-caffeine.inactive {
             color: #64748b;
           }
 
