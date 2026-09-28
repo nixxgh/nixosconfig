@@ -21,7 +21,6 @@
             spacing = 4;
 
             modules-left = [
-              "custom/launcher"
               "niri/workspaces"
               "niri/window"
             ];
@@ -39,13 +38,6 @@
               "tray"
               "clock"
             ];
-
-            "custom/launcher" = {
-              format = "󰍉 Search...";
-              tooltip = true;
-              tooltip-format = "Search Applications (Mod+S)";
-              on-click = "${pkgs.fuzzel}/bin/fuzzel";
-            };
 
             "niri/workspaces" = {
               format = "{index}";
@@ -213,22 +205,6 @@
             color: #f8fafc;
           }
 
-          #custom-launcher {
-            background-color: #202020;
-            border: 1px solid #383838;
-            border-radius: 6px;
-            padding: 0 10px;
-            margin: 4px 8px 4px 6px;
-            color: #94a3b8;
-            font-size: 11px;
-            font-weight: 500;
-          }
-
-          #custom-launcher:hover {
-            background-color: #2a2a2a;
-            border-color: #555555;
-            color: #ffffff;
-          }
 
           #workspaces button {
             padding: 0 8px;

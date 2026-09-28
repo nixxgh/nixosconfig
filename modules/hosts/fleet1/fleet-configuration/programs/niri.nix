@@ -61,7 +61,7 @@
 
           binds = {
             "Mod+Return".spawn-sh = lib.getExe pkgs.alacritty;
-            "Mod+S".spawn-sh = lib.getExe pkgs.fuzzel;
+            "Mod+S".spawn-sh = "${pkgs.procps}/bin/pkill -x fuzzel || ${lib.getExe pkgs.fuzzel}";
             "Mod+N".spawn-sh = "${pkgs.swaynotificationcenter}/bin/swaync-client -t -sw";
             "Mod+Alt+L".spawn-sh = "loginctl lock-session";
             "Mod+Q".close-window = { };
