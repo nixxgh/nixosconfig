@@ -24,13 +24,13 @@
           };
 
           colors = {
-            background = "0f172aff"; # Slate 900
-            text = "f8fafcff";       # Slate 50
+            background = "1a1a1aff"; # Charcoal 900
+            text = "f8fafcff";       # White text
             match = "34d399ff";      # Emerald 400
-            selection = "1e293bff";  # Slate 800
+            selection = "2c2c2cff";  # Charcoal selection
             selection-text = "10b981ff"; # Emerald 500
             selection-match = "34d399ff";
-            border = "10b981ff";     # Emerald 500 border
+            border = "5a5a5aff";     # Charcoal grey border
           };
 
           border = {
