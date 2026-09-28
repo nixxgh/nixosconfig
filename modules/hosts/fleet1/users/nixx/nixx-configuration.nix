@@ -24,6 +24,8 @@ in
         self.homeModules.direnv
         self.homeModules.antigravity
         self.homeModules.packages
+        self.homeModules.waybar
+        self.homeModules.fuzzel
       ];
 
       home.username = userName;
