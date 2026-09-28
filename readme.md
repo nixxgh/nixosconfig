@@ -407,7 +407,7 @@ mv modules/hosts/fleet1/users/alice/template-configuration.nix modules/hosts/fle
 
 # 4. In modules/hosts/fleet1/fleet-configuration/users.nix, register alice and assign permissions:
 # Copy the template from Section 2 into Section 3:
-# users.users.alice = { isNormalUser = true; shell = pkgs.zsh; extraGroups = [ "networkmanager" ]; };
+# users.users.alice = { isNormalUser = true; description = "alice"; shell = pkgs.zsh; extraGroups = [ "networkmanager" ]; };
 # home-manager.users.alice = self.homeModules.alice;
 
 # 5. Rebuild:

@@ -10,7 +10,7 @@
 #      modules/hosts/fleet1/users/<username>/programs/git.nix
 # 4. In modules/hosts/fleet1/fleet-configuration/users.nix:
 #      Copy the onboarding template in Section 2, paste in Section 3, and set extraGroups:
-#      users.users.<username> = { isNormalUser = true; shell = pkgs.zsh; extraGroups = [ "networkmanager" ]; };
+#      users.users.<username> = { isNormalUser = true; description = "<username>"; shell = pkgs.zsh; extraGroups = [ "networkmanager" ]; };
 #      home-manager.users.<username> = self.homeModules.<username>;
 # ==============================================================================
 

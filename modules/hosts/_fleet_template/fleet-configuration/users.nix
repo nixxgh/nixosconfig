@@ -25,7 +25,7 @@
       # ========================================================================
       # users.users.<username> = {
       #   isNormalUser = true;
-      #   description = "<User Full Name>";
+      #   description = "<username>";
       #   shell = pkgs.zsh;
       #   extraGroups = [
       #     # "wheel"          # Uncomment ONLY for fleet administrators

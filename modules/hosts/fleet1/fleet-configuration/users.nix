@@ -26,7 +26,7 @@
       # ========================================================================
       # users.users.<username> = {
       #   isNormalUser = true;
-      #   description = "<User Full Name>";
+      #   description = "<username>";
       #   shell = pkgs.zsh;
       #   extraGroups = [
       #     # "wheel"          # Uncomment ONLY for fleet administrators
@@ -43,7 +43,7 @@
       # ── Fleet Administrators (Full Sudo / Machine Management) ───────────────
       users.users.nixx = {
         isNormalUser = true;
-        description = "Primary Fleet Administrator";
+        description = "nixx";
         shell = pkgs.zsh;
         extraGroups = [
           "wheel"          # Administrator / sudo access
