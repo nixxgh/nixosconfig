@@ -13,6 +13,9 @@
         autoStart = true;
         capSysAdmin = true; # Required for DRM/KMS Wayland capture
         openFirewall = true; # Opens Sunshine streaming & web UI ports
+        settings = {
+          system_tray = "disabled";
+        };
       };
 
       # Enable input and uinput groups for virtual gamepad/mouse emulation

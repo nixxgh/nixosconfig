@@ -6,6 +6,10 @@
       home.packages = with pkgs; [
         yt-dlp
         antigravity-cli
+        grim
+        slurp
+        satty
+        wl-clipboard
       ];
     };
 }

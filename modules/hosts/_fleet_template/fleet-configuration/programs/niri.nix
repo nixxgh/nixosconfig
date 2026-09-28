@@ -14,6 +14,20 @@
       self',
       ...
     }:
+    let
+      screenshotScript = pkgs.writeShellScript "screenshot-satty" ''
+        GEOM=$(${pkgs.slurp}/bin/slurp -d -b "#00000080" -c "#10b981ff" -s "#00000000" -w 2) || exit 0
+        [ -z "$GEOM" ] && exit 0
+        mkdir -p "$HOME/Pictures/Screenshots"
+        ${pkgs.grim}/bin/grim -g "$GEOM" - | ${pkgs.satty}/bin/satty \
+          --filename - \
+          --fullscreen \
+          --output-filename "$HOME/Pictures/Screenshots/Screenshot_%Y-%m-%d_%H-%M-%S.png" \
+          --copy-command "${pkgs.wl-clipboard}/bin/wl-copy" \
+          --actions-on-enter save-to-clipboard \
+          --early-exit all
+      '';
+    in
     {
 
       packages.myNiri = inputs.wrapper-modules.wrappers.niri.wrap {
@@ -59,6 +73,11 @@
 
           binds = {
             "Mod+Return".spawn-sh = lib.getExe pkgs.alacritty;
+            "Mod+S".spawn-sh = "${pkgs.procps}/bin/pkill -x fuzzel || ${lib.getExe pkgs.fuzzel}";
+            "Mod+Shift+S".spawn-sh = "${screenshotScript}";
+            "Print".spawn-sh = "${screenshotScript}";
+            "Mod+N".spawn-sh = "${pkgs.swaynotificationcenter}/bin/swaync-client -t -sw";
+            "Mod+Alt+L".spawn-sh = "loginctl lock-session";
             "Mod+Q".close-window = { };
             "Mod+Shift+Slash".show-hotkey-overlay = { };
             "Mod+Shift+E".quit = { };
