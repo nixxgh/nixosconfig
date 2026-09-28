@@ -47,8 +47,8 @@ in
 
       # User-space rebuild & update workflow (zero sudo / root permissions required)
       home.shellAliases = {
-        rebuildhome = "(cd ~/myNixOS && git add . && (git diff --cached --quiet || git commit -m 'no comment by user') && (git pull --rebase || echo '⚠️ git pull failed/offline, continuing locally...') && (git push || echo '⚠️ git push failed, continuing locally...')) && home-manager switch --flake ~/myNixOS#${userName}";
-        updatehome = "(cd ~/myNixOS && (git pull --rebase || echo '⚠️ git pull failed/offline, continuing locally...') && nix flake update && git add flake.lock && (git diff --cached --quiet || (git commit -m 'Update flake.lock' && (git push || echo '⚠️ git push failed, continuing locally...')))) && rebuildhome";
+        rebuildhome = "(FLAKE_DIR=\"\$(git rev-parse --show-toplevel 2>/dev/null || echo \$HOME/myNixOS)\" && cd \"\$FLAKE_DIR\" && git add . && (git diff --cached --quiet || git commit -m 'no comment by user') && (git pull --rebase || echo '⚠️ git pull failed/offline, continuing locally...') && (git push || echo '⚠️ git push failed, continuing locally...')) && home-manager switch --flake .#${userName}";
+        updatehome = "(FLAKE_DIR=\"\$(git rev-parse --show-toplevel 2>/dev/null || echo \$HOME/myNixOS)\" && cd \"\$FLAKE_DIR\" && (git pull --rebase || echo '⚠️ git pull failed/offline, continuing locally...') && nix flake update && git add flake.lock && (git diff --cached --quiet || (git commit -m 'Update flake.lock' && (git push || echo '⚠️ git push failed, continuing locally...')))) && rebuildhome";
         cleanhome = "(nix-env --delete-generations old -p ~/.local/state/nix/profiles/home-manager 2>/dev/null || true) && nix-collect-garbage -d";
       };
     };
