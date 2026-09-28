@@ -47,6 +47,23 @@
           set -as terminal-features ",alacritty:RGB:extkeys"
           set -s extended-keys on
 
+          # Mouse selection: keep highlight on drag release and sync to clipboard via OSC 52
+          set -s set-clipboard on
+          bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-no-clear
+          bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel
+
+          # Persistent right-click pane menu (-O flag prevents instant dismiss on mouse release)
+          bind-key -n MouseDown3Pane display-menu -O -T "#[align=centre]#{pane_index} (#{pane_id})" -t = -x M -y M \
+            "Horizontal Split" h "split-window -h -c '#{pane_current_path}'" \
+            "Vertical Split"   v "split-window -v -c '#{pane_current_path}'" \
+            "" \
+            "Swap Up"          u "swap-pane -U" \
+            "Swap Down"        d "swap-pane -D" \
+            "" \
+            "Kill Pane"        x "kill-pane" \
+            "Respawn Pane"     R "respawn-pane -k" \
+            "#{?window_zoomed_flag,Unzoom,Zoom}" z "resize-pane -Z"
+
           # Allow image passthrough for terminal tools like Yazi
           set -g allow-passthrough on
           set -ga update-environment TERM
