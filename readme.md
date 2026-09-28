@@ -214,18 +214,21 @@ Restricted users cannot modify system configuration, cannot alter hardware setti
 Instead of a single monolithic rebuild command, this platform exposes three dedicated pipelines matching administrative blast radiuses:
 
 ```text
-┌───────────────────────┬─────────────────────────────┬───────────────────────┐
-│ Target & Command      │ Scope & Impact              │ Privilege Level       │
-├───────────────────────┼─────────────────────────────┼───────────────────────┤
-│ forcerebuildall       │ Full cascading rebuild:     │ Requires sudo         │
-│ (#<machine>)          │ Applies system + all users  │ (Root administrator)  │
-├───────────────────────┼─────────────────────────────┼───────────────────────┤
-│ rebuildenvironment    │ Non-cascading rebuild:      │ Requires sudo         │
-│ (#<machine>-env)      │ Updates kernel/daemons only │ (Leaves users untouched)│
-├───────────────────────┼─────────────────────────────┼───────────────────────┤
-│ rebuildhome           │ Standalone user generation: │ 100% Unprivileged     │
-│ (#<username>)         │ Updates dotfiles & packages │ (Zero root / no sudo) │
-└───────────────────────┴─────────────────────────────┴───────────────────────┘
+┌─────────────────────────┬───────────────────────────────┬─────────────────────────┐
+│ Target & Command        │ Scope & Impact                │ Privilege Level         │
+├─────────────────────────┼───────────────────────────────┼─────────────────────────┤
+│ forcerebuildall /       │ Full cascading cycle:         │ Requires sudo           │
+│ forceupdateall /        │ Applies system + all users,   │ (Root administrator)    │
+│ forcecleanall           │ updates lock, or sweeps all   │                         │
+├─────────────────────────┼───────────────────────────────┼─────────────────────────┤
+│ rebuildenvironment /    │ Non-cascading OS cycle:       │ Requires sudo           │
+│ updateenvironment /     │ Updates/cleans kernel/daemons │ (Leaves users untouched)│
+│ cleanenvironment        │ only (strips user space)      │                         │
+├─────────────────────────┼───────────────────────────────┼─────────────────────────┤
+│ rebuildhome /           │ Standalone user generation:   │ 100% Unprivileged       │
+│ updatehome /            │ Updates/cleans dotfiles & HM  │ (Zero root / no sudo)   │
+│ cleanhome               │ packages in user space        │                         │
+└─────────────────────────┴───────────────────────────────┴─────────────────────────┘
 ```
 
 ### 1. Core Architecture Pipelines (The Reusable Framework)
@@ -236,11 +239,14 @@ Every fleet and machine instantiated from the templates inherits these immutable
 | :------------------- | :---------------------- | :--------------------------------------------------------------------------------------- | :--------------------- |
 | `forcerebuildall`    | `#${hostName}`          | Full atomic rebuild (**cascading** into all wired user home-manager profiles)            | Requires `sudo`        |
 | `forceupdateall`     | `#${hostName}`          | Updates `flake.lock` and executes full cascading rebuild across machine and all users    | Requires `sudo`        |
+| `forcecleanall`      | Both User & System      | Purges old HM & system generations, sweeps all garbage, and runs `nix store optimise`     | Requires `sudo`        |
 | `rebuildenvironment` | `#${hostName}-env`      | Rebuilds system environment only (**non-cascading**; strips user space via `mkForce {}`) | Requires `sudo`        |
 | `updateenvironment`  | `#${hostName}-env`      | Updates `flake.lock` and applies system-only rebuild                                      | Requires `sudo`        |
+| `cleanenvironment`   | `#${hostName}-env`      | Purges old system generations, sweeps system garbage, and optimizes store                 | Requires `sudo`        |
 | `rebuildhome`        | `#${userName}`          | Rebuilds user space only (`home-manager switch --flake .#<user>`)                        | **100% Unprivileged**  |
 | `updatehome`         | `#${userName}`          | Updates `flake.lock` and rebuilds user space only                                        | **100% Unprivileged**  |
-| `nixclean`           | Both User & System      | Collects system/user garbage and runs `nix store optimise`                                | Requires `sudo`        |
+| `cleanhome`          | `#${userName}`          | Purges old user & Home Manager generations, collects user garbage (zero sudo required)   | **100% Unprivileged**  |
+| `nixclean`           | Both User & System      | Alias to `forcecleanall` (for backward compatibility)                                    | Requires `sudo`        |
 
 ---
 
@@ -325,7 +331,7 @@ myNixOS/
             │
             ├── users/                      # Fleet 1 User Roster (Home Manager)
             │   ├── nixx/                   # Active user capsule: nixx
-            │   │   ├── nixx-configuration.nix # User capsule (rebuildhome, updatehome)
+            │   │   ├── nixx-configuration.nix # User capsule (rebuildhome, updatehome, cleanhome)
             │   │   ├── packages.nix        # Userland packages (home.packages)
             │   │   ├── programs/           # 11 personal dotfiles & app configurations
             │   │   │   ├── alacritty.nix   # Alacritty terminal emulator

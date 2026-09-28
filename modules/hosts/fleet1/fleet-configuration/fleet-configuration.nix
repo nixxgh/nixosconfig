@@ -35,7 +35,9 @@
         updateenvironment = "(cd \$HOME/myNixOS && (git pull --rebase || echo '⚠️ git pull failed/offline, continuing locally...') && nix flake update && git add flake.lock && (git diff --cached --quiet || (git commit -m 'Update flake.lock' && (git push || echo '⚠️ git push failed, continuing locally...'))) && nix build .#nixosConfigurations.${config.networking.hostName}-env.config.system.build.toplevel --no-link) && rebuildenvironment";
 
         # Store & Garbage Collection
-        nixclean = "nix-collect-garbage -d && sudo nix-collect-garbage -d && nix store optimise";
+        cleanenvironment = "sudo nix-collect-garbage -d && nix store optimise";
+        forcecleanall = "(nix-env --delete-generations old -p ~/.local/state/nix/profiles/home-manager 2>/dev/null || true) && nix-collect-garbage -d && sudo nix-collect-garbage -d && nix store optimise";
+        nixclean = "forcecleanall";
 
         # ── 2. Machine & Tooling Utilities (Reference Implementation) ─────────
         ff = "fastfetch";
