@@ -13,6 +13,12 @@
       programs.alacritty = {
         enable = true;
         settings = {
+          colors = {
+            primary = {
+              background = "#000000";
+            };
+          };
+
           keyboard.bindings = [
             {
               key = "Return";

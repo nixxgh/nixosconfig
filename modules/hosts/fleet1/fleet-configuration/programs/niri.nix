@@ -29,6 +29,7 @@
 
           spawn-at-startup = [
             [ (lib.getExe pkgs.waybar) ]
+            [ (lib.getExe pkgs.swaybg) "-c" "#000000" ]
           ];
 
           xwayland-satellite.path = lib.getExe pkgs.xwayland-satellite;
@@ -61,6 +62,8 @@
           binds = {
             "Mod+Return".spawn-sh = lib.getExe pkgs.alacritty;
             "Mod+S".spawn-sh = lib.getExe pkgs.fuzzel;
+            "Mod+N".spawn-sh = "${pkgs.swaynotificationcenter}/bin/swaync-client -t -sw";
+            "Mod+Alt+L".spawn-sh = "loginctl lock-session";
             "Mod+Q".close-window = { };
             "Mod+Shift+Slash".show-hotkey-overlay = { };
             "Mod+Shift+E".quit = { };

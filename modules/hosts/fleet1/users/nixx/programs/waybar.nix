@@ -34,6 +34,8 @@
               "battery"
               "network"
               "bluetooth"
+              "custom/nightlight"
+              "custom/notification"
               "tray"
             ];
 
@@ -94,6 +96,7 @@
               format-ethernet = "󰈀 {ipaddr}";
               format-disconnected = "󰤮 Disconnected";
               tooltip-format = "{ifname} via {gwaddr}";
+              on-click = "${pkgs.networkmanagerapplet}/bin/nm-connection-editor";
             };
 
             bluetooth = {
@@ -102,6 +105,48 @@
               format-disabled = "󰂲";
               tooltip-format = "{controller_alias}\t{controller_address}";
               tooltip-format-connected = "{controller_alias}\t{controller_address}\n\n{device_enumerate}";
+              on-click = "${pkgs.blueman}/bin/blueman-manager";
+            };
+
+            "custom/nightlight" = {
+              format = "{}";
+              return-type = "json";
+              interval = 2;
+              exec = "${pkgs.writeShellScript "waybar-nightlight-status" ''
+                if ${pkgs.systemd}/bin/systemctl --user is-active --quiet wlsunset; then
+                  echo '{"text":"󰌵","class":"active","tooltip":"Night Light: Active (Click to disable)"}'
+                else
+                  echo '{"text":"󰌶","class":"inactive","tooltip":"Night Light: Off (Click to enable)"}'
+                fi
+              ''}";
+              on-click = "${pkgs.writeShellScript "waybar-nightlight-toggle" ''
+                if ${pkgs.systemd}/bin/systemctl --user is-active --quiet wlsunset; then
+                  ${pkgs.systemd}/bin/systemctl --user stop wlsunset
+                else
+                  ${pkgs.systemd}/bin/systemctl --user start wlsunset
+                fi
+              ''}";
+            };
+
+            "custom/notification" = {
+              tooltip = false;
+              format = "{icon}";
+              format-icons = {
+                notification = "󱅫";
+                none = "󰂚";
+                dnd-notification = "󰂛";
+                dnd-none = "󰂛";
+                inhibited-notification = "󱅫";
+                inhibited-none = "󰂚";
+                dnd-inhibited-notification = "󰂛";
+                dnd-inhibited-none = "󰂛";
+              };
+              return-type = "json";
+              exec-if = "which swaync-client";
+              exec = "${pkgs.swaynotificationcenter}/bin/swaync-client -swb";
+              on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t -sw";
+              on-click-right = "${pkgs.swaynotificationcenter}/bin/swaync-client -d -sw";
+              escape = true;
             };
 
             tray = {
@@ -159,9 +204,22 @@
           #battery,
           #network,
           #bluetooth,
+          #custom-notification,
           #tray {
             padding: 0 10px;
             color: #e2e8f0;
+          }
+
+          #custom-nightlight {
+            padding: 0 10px;
+          }
+
+          #custom-nightlight.active {
+            color: #f59e0b;
+          }
+
+          #custom-nightlight.inactive {
+            color: #64748b;
           }
 
           #battery.charging {

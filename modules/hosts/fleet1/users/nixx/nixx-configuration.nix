@@ -26,6 +26,13 @@ in
         self.homeModules.packages
         self.homeModules.waybar
         self.homeModules.fuzzel
+        self.homeModules.swaync
+        self.homeModules.hypridle
+        self.homeModules.hyprlock
+        self.homeModules.wlsunset
+        self.homeModules.swaybg
+        self.homeModules.bluemanApplet
+        self.homeModules.nmApplet
       ];
 
       home.username = userName;
