@@ -44,6 +44,7 @@
       packages.myNiri = inputs.wrapper-modules.wrappers.niri.wrap {
         inherit pkgs;
         settings = {
+          prefer-no-csd = { };
           hotkey-overlay.skip-at-startup = true;
 
           gestures = {
