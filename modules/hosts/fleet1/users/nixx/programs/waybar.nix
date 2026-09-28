@@ -17,7 +17,7 @@
           mainBar = {
             layer = "top";
             position = "bottom";
-            height = 32;
+            height = 34;
             spacing = 4;
 
             modules-left = [
@@ -25,9 +25,7 @@
               "niri/window"
             ];
 
-            modules-center = [
-              "clock"
-            ];
+            modules-center = [ ];
 
             modules-right = [
               "pulseaudio"
@@ -38,6 +36,7 @@
               "custom/caffeine"
               "custom/notification"
               "tray"
+              "clock"
             ];
 
             "niri/workspaces" = {
@@ -53,7 +52,7 @@
             };
 
             clock = {
-              format = "{:%a %b %d  %H:%M}";
+              format = "{:%H:%M\n%d/%m/%Y}";
               tooltip-format = "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>";
             };
 
@@ -230,7 +229,8 @@
 
           #clock {
             color: #ffffff;
-            font-weight: bold;
+            font-size: 11px;
+            font-weight: 600;
             padding: 0 10px;
           }
 
