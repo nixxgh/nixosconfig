@@ -10,6 +10,7 @@
         satty
         wl-clipboard
         libnotify
+        pavucontrol
       ];
     };
 }
