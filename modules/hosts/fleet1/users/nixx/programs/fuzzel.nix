@@ -6,7 +6,29 @@
       lib,
       ...
     }:
+    let
+      hideDesktopEntry = name: {
+        "applications/${name}.desktop".text = ''
+          [Desktop Entry]
+          Type=Application
+          Name=${name}
+          NoDisplay=true
+        '';
+      };
+    in
     {
+      # Suppress secondary utilities and background daemons from application launcher
+      xdg.dataFile = lib.mkMerge [
+        (hideDesktopEntry "xterm")
+        (hideDesktopEntry "nixos-manual")
+        (hideDesktopEntry "blueman-adapters")
+        (hideDesktopEntry "nm-connection-editor")
+        (hideDesktopEntry "dev.lizardbyte.app.Sunshine")
+        (hideDesktopEntry "dev.lizardbyte.app.Sunshine.kwin")
+        (hideDesktopEntry "dev.lizardbyte.app.Sunshine.terminal")
+        (hideDesktopEntry "nvim")
+      ];
+
       programs.fuzzel = {
         enable = true;
         settings = {
