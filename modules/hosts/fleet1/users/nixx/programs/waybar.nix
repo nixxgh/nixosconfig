@@ -52,7 +52,8 @@
             };
 
             clock = {
-              format = "{:%H:%M\n%d/%m/%Y}";
+              interval = 1;
+              format = "{:%H:%M:%S\n%d/%m/%y}";
               tooltip-format = "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>";
             };
 
