@@ -113,18 +113,29 @@
               return-type = "json";
               interval = 2;
               exec = "${pkgs.writeShellScript "waybar-nightlight-status" ''
-                if ${pkgs.systemd}/bin/systemctl --user is-active --quiet wlsunset; then
-                  echo '{"text":"󰌵","class":"active","tooltip":"Night Light: Active (Click to disable)"}'
+                if ${pkgs.systemd}/bin/systemctl --user is-active --quiet wlsunset-forced; then
+                  echo '{"text":"󰌵 On","class":"on","tooltip":"Night Light: Forced ON (Locked 4000K)\nClick for OFF | Right-click for Auto"}'
+                elif ${pkgs.systemd}/bin/systemctl --user is-active --quiet wlsunset; then
+                  echo '{"text":"󰌵 Auto","class":"auto","tooltip":"Night Light: Auto (Solar Cycle: 6500K ↔ 4000K)\nClick for Forced ON | Right-click for Auto"}'
                 else
-                  echo '{"text":"󰌶","class":"inactive","tooltip":"Night Light: Off (Click to enable)"}'
+                  echo '{"text":"󰌶 Off","class":"off","tooltip":"Night Light: Forced OFF (Standard 6500K)\nClick for Auto | Right-click for Auto"}'
                 fi
               ''}";
               on-click = "${pkgs.writeShellScript "waybar-nightlight-toggle" ''
-                if ${pkgs.systemd}/bin/systemctl --user is-active --quiet wlsunset; then
+                if ${pkgs.systemd}/bin/systemctl --user is-active --quiet wlsunset-forced; then
+                  ${pkgs.systemd}/bin/systemctl --user stop wlsunset-forced
                   ${pkgs.systemd}/bin/systemctl --user stop wlsunset
+                elif ${pkgs.systemd}/bin/systemctl --user is-active --quiet wlsunset; then
+                  ${pkgs.systemd}/bin/systemctl --user stop wlsunset
+                  ${pkgs.systemd}/bin/systemctl --user start wlsunset-forced
                 else
+                  ${pkgs.systemd}/bin/systemctl --user stop wlsunset-forced
                   ${pkgs.systemd}/bin/systemctl --user start wlsunset
                 fi
+              ''}";
+              on-click-right = "${pkgs.writeShellScript "waybar-nightlight-reset" ''
+                ${pkgs.systemd}/bin/systemctl --user stop wlsunset-forced
+                ${pkgs.systemd}/bin/systemctl --user restart wlsunset
               ''}";
             };
 
@@ -214,11 +225,15 @@
             padding: 0 10px;
           }
 
-          #custom-nightlight.active {
+          #custom-nightlight.auto {
+            color: #34d399;
+          }
+
+          #custom-nightlight.on {
             color: #f59e0b;
           }
 
-          #custom-nightlight.inactive {
+          #custom-nightlight.off {
             color: #64748b;
           }
 
