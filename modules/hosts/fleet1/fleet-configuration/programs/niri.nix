@@ -38,6 +38,26 @@
           --actions-on-enter save-to-clipboard \
           --early-exit all
       '';
+
+      toggleTealTerminal = pkgs.writeShellScript "toggle-teal-terminal" ''
+        if ${pkgs.procps}/bin/pgrep -f "kitty --class floating-teal" > /dev/null; then
+          ${pkgs.procps}/bin/pkill -f "kitty --class floating-teal"
+        else
+          RES=$(${pkgs.niri}/bin/niri msg --json outputs 2>/dev/null | ${pkgs.jq}/bin/jq -r 'to_entries[0].value.logical | "\(.width) \(.height)"' 2>/dev/null || echo "1366 768")
+          W=$(echo "$RES" | ${pkgs.gawk}/bin/awk '{print $1 - 10}')
+          H=$(echo "$RES" | ${pkgs.gawk}/bin/awk '{print $2 - 10}')
+          ${pkgs.kitty}/bin/kitty \
+            --class floating-teal \
+            -o background=#042f2e \
+            -o background_opacity=0.75 \
+            -o background_blur=40 \
+            -o remember_window_size=no \
+            -o initial_window_width="''${W}px" \
+            -o initial_window_height="''${H}px" \
+            -o hide_window_decorations=yes \
+            -o confirm_os_window_close=0 &
+        fi
+      '';
     in
     {
 
@@ -84,8 +104,17 @@
             open-maximized = true;
           };
 
+          extraConfig = ''
+            window-rule {
+              match app-id="floating-teal"
+              open-floating true
+              default-floating-position x=5 y=5 relative-to="top-left"
+            }
+          '';
+
           binds = {
             "Mod+Return".spawn-sh = lib.getExe pkgs.alacritty;
+            "Mod+B".spawn-sh = "${toggleTealTerminal}";
             "Mod+D".spawn-sh = "ags toggle bar";
             "Mod+S".spawn-sh = "ags toggle launcher";
             "Mod+Shift+S".spawn-sh = "${screenshotQuick}";
@@ -104,11 +133,15 @@
             "Mod+K".focus-workspace-up = { };
             "Mod+J".focus-workspace-down = { };
 
-            # Move Columns & Workspaces (Vim Ctrl + HJKL)
+            # Move Columns & Workspaces (Vim Ctrl / Shift + HJKL)
             "Mod+Ctrl+H".move-column-left = { };
             "Mod+Ctrl+L".move-column-right = { };
             "Mod+Ctrl+K".move-column-to-workspace-up = { };
             "Mod+Ctrl+J".move-column-to-workspace-down = { };
+            "Mod+Shift+H".move-column-left = { };
+            "Mod+Shift+L".move-column-right = { };
+            "Mod+Shift+K".move-column-to-workspace-up = { };
+            "Mod+Shift+J".move-column-to-workspace-down = { };
 
             "Mod+R".switch-preset-column-width = { };
             "Mod+F".maximize-column = { };
