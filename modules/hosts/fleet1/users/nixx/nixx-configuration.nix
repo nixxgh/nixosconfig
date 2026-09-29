@@ -25,14 +25,10 @@ in
         self.homeModules.antigravity
         self.homeModules.packages
         self.homeModules.astal
-        self.homeModules.fuzzel
-        self.homeModules.swaync
         self.homeModules.hypridle
         self.homeModules.hyprlock
         self.homeModules.wlsunset
         self.homeModules.swaybg
-        self.homeModules.bluemanApplet
-        self.homeModules.nmApplet
       ];
 
       home.username = userName;
@@ -41,6 +37,7 @@ in
 
       # Let Home Manager manage itself
       programs.home-manager.enable = true;
+      news.display = "silent";
 
       # User-space rebuild & update workflow (zero sudo / root permissions required)
       home.shellAliases = {

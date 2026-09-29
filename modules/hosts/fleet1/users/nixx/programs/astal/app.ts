@@ -1,10 +1,14 @@
 import app from "ags/gtk4/app"
-import style from "./style.scss"
-import Bar from "./widget/Bar"
+import style from "./src/style.css"
+import BarLayout from "./src/layouts/BarLayout"
+import LauncherLayout from "./src/layouts/LauncherLayout"
+import NotificationLayout from "./src/layouts/NotificationLayout"
 
 app.start({
   css: style,
   main() {
-    app.get_monitors().map(Bar)
+    app.get_monitors().map(BarLayout)
+    LauncherLayout()
+    NotificationLayout()
   },
 })

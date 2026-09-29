@@ -86,12 +86,12 @@
 
           binds = {
             "Mod+Return".spawn-sh = lib.getExe pkgs.alacritty;
-            "Mod+S".spawn-sh = "${pkgs.procps}/bin/pkill -x fuzzel || ${lib.getExe pkgs.fuzzel}";
+            "Mod+S".spawn-sh = "ags toggle launcher";
             "Mod+Shift+S".spawn-sh = "${screenshotQuick}";
             "Print".spawn-sh = "${screenshotQuick}";
             "Mod+Alt+S".spawn-sh = "${screenshotSatty}";
             "Shift+Print".spawn-sh = "${screenshotSatty}";
-            "Mod+N".spawn-sh = "${pkgs.swaynotificationcenter}/bin/swaync-client -t -sw";
+            "Mod+N".spawn-sh = "ags toggle notifications";
             "Mod+Alt+L".spawn-sh = "loginctl lock-session";
             "Mod+Q".close-window = { };
             "Mod+Shift+Slash".show-hotkey-overlay = { };
