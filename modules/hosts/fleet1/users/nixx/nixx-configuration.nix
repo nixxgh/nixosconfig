@@ -24,7 +24,7 @@ in
         self.homeModules.direnv
         self.homeModules.antigravity
         self.homeModules.packages
-        self.homeModules.waybar
+        self.homeModules.astal
         self.homeModules.fuzzel
         self.homeModules.swaync
         self.homeModules.hypridle

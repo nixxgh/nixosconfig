@@ -54,7 +54,6 @@
           };
 
           spawn-at-startup = [
-            [ (lib.getExe pkgs.waybar) ]
             [ (lib.getExe pkgs.swaybg) "-c" "#000000" ]
           ];
 

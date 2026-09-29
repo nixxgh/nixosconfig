@@ -17,6 +17,11 @@
     };
 
     wrapper-modules.url = "github:BirdeeHub/nix-wrapper-modules";
+
+    ags = {
+      url = "github:aylur/ags";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules);
