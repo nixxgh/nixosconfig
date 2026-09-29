@@ -86,6 +86,7 @@
 
           binds = {
             "Mod+Return".spawn-sh = lib.getExe pkgs.alacritty;
+            "Mod+D".spawn-sh = "ags toggle bar";
             "Mod+S".spawn-sh = "ags toggle launcher";
             "Mod+Shift+S".spawn-sh = "${screenshotQuick}";
             "Print".spawn-sh = "${screenshotQuick}";
