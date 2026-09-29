@@ -14,6 +14,7 @@
         pavucontrol
         tty-clock
         cmatrix
+        tmatrix
       ];
     };
 }
