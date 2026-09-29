@@ -13,6 +13,7 @@
         libnotify
         pavucontrol
         tty-clock
+        cmatrix
       ];
     };
 }
