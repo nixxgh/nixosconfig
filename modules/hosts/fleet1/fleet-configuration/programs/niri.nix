@@ -52,8 +52,8 @@
             -o background_opacity=0.75 \
             -o background_blur=40 \
             -o remember_window_size=no \
-            -o initial_window_width="''${W}px" \
-            -o initial_window_height="''${H}px" \
+            -o initial_window_width="''${W}" \
+            -o initial_window_height="''${H}" \
             -o hide_window_decorations=yes \
             -o confirm_os_window_close=0 &
         fi
