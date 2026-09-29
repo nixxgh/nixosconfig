@@ -22,6 +22,7 @@ in
         self.homeModules.zen
         self.homeModules.alacritty
         self.homeModules.direnv
+        self.homeModules.fzf
         self.homeModules.antigravity
         self.homeModules.packages
         self.homeModules.astal
