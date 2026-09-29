@@ -25,6 +25,7 @@ in
         self.homeModules.fzf
         self.homeModules.atuin
         self.homeModules.tealdeer
+        self.homeModules.btop
         self.homeModules.antigravity
         self.homeModules.packages
         self.homeModules.astal
