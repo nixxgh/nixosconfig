@@ -17,7 +17,10 @@ window.Bar button,
 window.Bar menubutton,
 window.Bar menubutton > button,
 window.Launcher button,
-window.Notifications button {
+window.Notifications button,
+window.Deck button,
+window.Deck menubutton,
+window.Deck menubutton > button {
   background-color: transparent;
   background-image: none;
   box-shadow: none;
@@ -30,7 +33,9 @@ window.Notifications button {
 window.Bar button:hover,
 window.Bar menubutton > button:hover,
 window.Launcher button:hover,
-window.Notifications button:hover {
+window.Notifications button:hover,
+window.Deck button:hover,
+window.Deck menubutton > button:hover {
   background-color: #0f172a;
   border-color: #1e293b;
   color: #34d399;
@@ -209,3 +214,55 @@ calendar:selected {
   color: #020617;
   font-weight: bold;
 }
+
+/* Cyber Deck Surface */
+window.Deck {
+  background: transparent;
+}
+
+.deck-surface {
+  background-color: rgba(4, 47, 46, 0.72);
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(20, 184, 166, 0.15);
+}
+
+.deck-card {
+  background-color: rgba(2, 6, 23, 0.65);
+  border: 1px solid rgba(45, 212, 191, 0.2);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.deck-card:hover {
+  border-color: rgba(45, 212, 191, 0.45);
+}
+
+.deck-header-badge {
+  background-color: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(45, 212, 191, 0.4);
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+.deck-action-btn {
+  background-color: #0f172a;
+  border: 1px solid rgba(45, 212, 191, 0.25);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #ffffff;
+}
+
+.deck-action-btn:hover {
+  background-color: #1e293b;
+  border-color: #34d399;
+  color: #34d399;
+}
+
+.deck-action-btn.danger:hover {
+  background-color: #3b0764;
+  border-color: #f87171;
+  color: #fca5a5;
+}
+

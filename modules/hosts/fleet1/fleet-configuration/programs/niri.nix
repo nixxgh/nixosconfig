@@ -38,26 +38,6 @@
           --actions-on-enter save-to-clipboard \
           --early-exit all
       '';
-
-      toggleTealTerminal = pkgs.writeShellScript "toggle-teal-terminal" ''
-        if ${pkgs.procps}/bin/pgrep -f "kitty --class floating-teal" > /dev/null; then
-          ${pkgs.procps}/bin/pkill -f "kitty --class floating-teal"
-        else
-          RES=$(${pkgs.niri}/bin/niri msg --json outputs 2>/dev/null | ${pkgs.jq}/bin/jq -r 'to_entries[0].value.logical | "\(.width) \(.height)"' 2>/dev/null || echo "1366 768")
-          W=$(echo "$RES" | ${pkgs.gawk}/bin/awk '{print $1 - 10}')
-          H=$(echo "$RES" | ${pkgs.gawk}/bin/awk '{print $2 - 10}')
-          ${pkgs.kitty}/bin/kitty \
-            --class floating-teal \
-            -o background=#042f2e \
-            -o background_opacity=0.75 \
-            -o background_blur=40 \
-            -o remember_window_size=no \
-            -o initial_window_width="''${W}" \
-            -o initial_window_height="''${H}" \
-            -o hide_window_decorations=yes \
-            -o confirm_os_window_close=0 &
-        fi
-      '';
     in
     {
 
@@ -105,16 +85,24 @@
           };
 
           extraConfig = ''
-            window-rule {
-              match app-id="floating-teal"
-              open-floating true
-              default-floating-position x=5 y=5 relative-to="top-left"
+            blur {
+              passes 4
+              offset 4.0
+              noise 0.02
+            }
+
+            layer-rule {
+              match namespace="deck"
+              background-effect {
+                blur true
+                xray false
+              }
             }
           '';
 
           binds = {
             "Mod+Return".spawn-sh = lib.getExe pkgs.alacritty;
-            "Mod+B".spawn-sh = "${toggleTealTerminal}";
+            "Mod+B".spawn-sh = "ags toggle deck";
             "Mod+D".spawn-sh = "ags toggle bar";
             "Mod+S".spawn-sh = "ags toggle launcher";
             "Mod+Shift+S".spawn-sh = "${screenshotQuick}";
