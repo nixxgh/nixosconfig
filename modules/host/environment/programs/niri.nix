@@ -54,7 +54,6 @@
             };
             border = {
               on = { };
-              width = 2;
               active-color = "#36393f";
               inactive-color = "#36393f";
             };
