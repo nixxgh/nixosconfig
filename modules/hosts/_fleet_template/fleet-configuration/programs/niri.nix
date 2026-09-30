@@ -70,17 +70,12 @@
           layout = {
             gaps = 5;
             "background-color" = "#000000";
-            "default-column-width".proportion = 1.0;
             focus-ring = {
               on = { };
               width = 2;
               active-color = "#5a5a5a";
               inactive-color = "#242424";
             };
-          };
-
-          window-rule = {
-            open-maximized = true;
           };
 
           binds = {

@@ -71,7 +71,6 @@
           layout = {
             gaps = 5;
             "background-color" = "#000000";
-            "default-column-width".proportion = 1.0;
             focus-ring = {
               on = { };
               width = 2;
@@ -80,36 +79,20 @@
             };
           };
 
-          window-rule = {
-            open-maximized = true;
-          };
-
           extraConfig = ''
             blur {
               passes 4
               offset 4.0
               noise 0.02
             }
-
-            layer-rule {
-              match namespace="deck"
-              background-effect {
-                blur true
-                xray false
-              }
-            }
           '';
 
           binds = {
             "Mod+Return".spawn-sh = lib.getExe pkgs.alacritty;
-            "Mod+B".spawn-sh = "ags toggle deck";
-            "Mod+D".spawn-sh = "ags toggle bar";
-            "Mod+S".spawn-sh = "ags toggle launcher";
             "Mod+Shift+S".spawn-sh = "${screenshotQuick}";
             "Print".spawn-sh = "${screenshotQuick}";
             "Mod+Alt+S".spawn-sh = "${screenshotSatty}";
             "Shift+Print".spawn-sh = "${screenshotSatty}";
-            "Mod+N".spawn-sh = "ags toggle notifications";
             "Mod+Alt+L".spawn-sh = "loginctl lock-session";
             "Mod+Q".close-window = { };
             "Mod+Shift+Slash".show-hotkey-overlay = { };
