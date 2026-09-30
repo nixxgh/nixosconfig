@@ -113,7 +113,7 @@
 
         def prompt_seek(stdscr, h, w, media):
             prompt = "Seek to (e.g. 1:30, 45, +15s, 50%): "
-            py = min(h - 1, 11)
+            py = min(h - 1, 12)
             safe_addstr(stdscr, py, 2, " " * (w - 4))
             safe_addstr(stdscr, py, 2, prompt, curses.color_pair(5) | curses.A_BOLD)
             stdscr.refresh()
@@ -189,10 +189,10 @@
             curses.init_pair(4, curses.COLOR_RED, -1)
             curses.init_pair(5, curses.COLOR_YELLOW, -1)
 
-            # Spawn embedded CAVA visualizer
+            # Spawn embedded CAVA visualizer with 64 frequency bars
             cava_cfg = (
                 "[general]\n"
-                "bars = 48\n"
+                "bars = 64\n"
                 "framerate = 30\n"
                 "[input]\n"
                 "method = pipewire\n"
@@ -200,7 +200,7 @@
                 "method = raw\n"
                 "raw_target = /dev/stdout\n"
                 "data_format = ascii\n"
-                "ascii_max_range = 16\n"
+                "ascii_max_range = 100\n"
                 "bar_delimiter = 59\n"
                 "frame_delimiter = 10\n"
                 "[smoothing]\n"
@@ -256,6 +256,13 @@
             btn_regions = []
 
             blocks = [" ", " ", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
+            all_row_colors = [
+                curses.color_pair(4) | curses.A_BOLD,  # Red (top peak)
+                curses.color_pair(3) | curses.A_BOLD,  # Magenta
+                curses.color_pair(5) | curses.A_BOLD,  # Yellow
+                curses.color_pair(2) | curses.A_BOLD,  # Green
+                curses.color_pair(1) | curses.A_BOLD,  # Cyan (base)
+            ]
 
             try:
                 while True:
@@ -263,10 +270,22 @@
                     h, w = stdscr.getmaxyx()
                     b_width = max(10, min(28, w - 32))
 
-                    cava_lines = 2 if h >= 14 else 1
-                    time_row = 5 + cava_lines
-                    btn_row = 6 + cava_lines
-                    vol_row = 7 + cava_lines
+                    # Adaptive CAVA height: bigger on larger windows, compact on small
+                    if h >= 22:
+                        cava_lines = 5
+                    elif h >= 18:
+                        cava_lines = 4
+                    elif h >= 15:
+                        cava_lines = 3
+                    elif h >= 13:
+                        cava_lines = 2
+                    else:
+                        cava_lines = 1
+
+                    info_start_y = 1 + cava_lines + 1
+                    time_row = info_start_y + 3
+                    btn_row = info_start_y + 4
+                    vol_row = info_start_y + 5
 
                     # Auto-commit drag if no events arrived for 0.4s
                     if drag_mode is not None and now - last_drag_time > 0.4:
@@ -319,28 +338,31 @@
 
                     stdscr.erase()
 
-                    # Render Embedded CAVA Visualizer (Replacing old Header Banner)
-                    raw_bars = cava_data[0] if cava_data[0] else [0] * 32
-                    vis_width = min(len(raw_bars), max(16, min(48, w - 8)))
+                    # Render Enhanced CAVA Audio Visualizer
+                    raw_bars = cava_data[0] if cava_data[0] else [0] * 64
+                    vis_width = min(len(raw_bars), max(16, min(64, w - 6)))
                     bars_to_show = raw_bars[:vis_width]
 
-                    if cava_lines == 2:
-                        top_chars = [blocks[max(0, min(8, v - 8))] if v > 8 else " " for v in bars_to_show]
-                        bot_chars = ["█" if v >= 8 else blocks[max(0, min(8, v))] for v in bars_to_show]
-                        top_str = "".join(top_chars)
-                        bot_str = "".join(bot_chars)
-                        cx = max(2, (w - len(top_str)) // 2)
-                        safe_addstr(stdscr, 1, cx, top_str, curses.color_pair(3) | curses.A_BOLD)  # Magenta peaks
-                        safe_addstr(stdscr, 2, cx, bot_str, curses.color_pair(1) | curses.A_BOLD)  # Cyan base
-                        safe_addstr(stdscr, 3, 2, "─" * max(0, w - 4), curses.color_pair(1))
-                    else:
-                        line_chars = [blocks[max(0, min(8, v // 2))] for v in bars_to_show]
-                        line_str = "".join(line_chars)
-                        cx = max(2, (w - len(line_str)) // 2)
-                        safe_addstr(stdscr, 1, cx, line_str, curses.color_pair(1) | curses.A_BOLD)
-                        safe_addstr(stdscr, 2, 2, "─" * max(0, w - 4), curses.color_pair(1))
+                    max_level = cava_lines * 8
+                    scaled_bars = [int(v * max_level / 100.0) for v in bars_to_show]
+                    active_colors = all_row_colors[-cava_lines:]
 
-                    info_start_y = 1 + cava_lines + 1
+                    for r in range(cava_lines):
+                        level = cava_lines - 1 - r
+                        row_chars = []
+                        for s in scaled_bars:
+                            rem = s - level * 8
+                            if rem <= 0:
+                                row_chars.append(" ")
+                            elif rem >= 8:
+                                row_chars.append("█")
+                            else:
+                                row_chars.append(blocks[rem])
+                        row_str = "".join(row_chars)
+                        cx = max(2, (w - len(row_str)) // 2)
+                        safe_addstr(stdscr, 1 + r, cx, row_str, active_colors[r])
+
+                    safe_addstr(stdscr, 1 + cava_lines, 2, "─" * max(0, w - 4), curses.color_pair(1))
 
                     # Media Info
                     if media:
