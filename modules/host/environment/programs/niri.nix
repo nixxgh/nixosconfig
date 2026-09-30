@@ -29,7 +29,13 @@
           };
 
           spawn-at-startup = [
-            [ (lib.getExe pkgs.swaybg) "-c" self.theme.hex.bg ]
+            [
+              (lib.getExe pkgs.swaybg)
+              "-i"
+              "/home/nixx/Pictures/Wallpapers/infinite-tsukuyomi-naruto.png"
+              "-m"
+              "fill"
+            ]
           ];
 
           xwayland-satellite.path = lib.getExe pkgs.xwayland-satellite;
