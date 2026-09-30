@@ -6,21 +6,21 @@
   };
 
   config.flake.theme = rec {
-    # Raw hex (without '#')
+    # Raw hex (without '#') - Gruvbox Dark Hard
     raw = {
-      bg = "000000";
-      surface = "1a1a1a";
-      surfaceElevated = "2c2c2c";
-      surfaceMuted = "0f172a";
-      surfaceBorder = "1e293b";
-      border = "5a5a5a";
-      borderInactive = "242424";
-      text = "f8fafc";
-      textMuted = "94a3b8";
-      accent = "10b981";       # Emerald 500
-      accentLight = "34d399";  # Emerald 400
-      accentTeal = "5eead4";   # Teal 300
-      danger = "ef4444";       # Red 500
+      bg = "1d2021";              # base00 hard background
+      surface = "282828";         # dark0
+      surfaceElevated = "3c3836"; # base01
+      surfaceMuted = "1d2021";    # base00
+      surfaceBorder = "504945";   # base02
+      border = "665c54";          # base03
+      borderInactive = "3c3836";  # base01
+      text = "ebdbb2";            # base06 light1
+      textMuted = "a89984";       # gray
+      accent = "fe8019";          # base09 orange / bright
+      accentLight = "fabd2f";     # base0A yellow
+      accentTeal = "8ec07c";      # base0C aqua
+      danger = "fb4934";          # base08 red
     };
 
     # Hex with '#'
@@ -28,19 +28,19 @@
 
     # Formatted RGB strings
     rgb = {
-      bg = "rgb(0, 0, 0)";
-      surface = "rgb(26, 26, 26)";
-      surfaceElevated = "rgb(44, 44, 44)";
-      surfaceMuted = "rgb(15, 23, 42)";
-      surfaceBorder = "rgb(30, 41, 59)";
-      border = "rgb(90, 90, 90)";
-      borderInactive = "rgb(36, 36, 36)";
-      text = "rgb(248, 250, 252)";
-      textMuted = "rgb(148, 163, 184)";
-      accent = "rgb(16, 185, 129)";
-      accentLight = "rgb(52, 211, 153)";
-      accentTeal = "rgb(94, 234, 212)";
-      danger = "rgb(239, 68, 68)";
+      bg = "rgb(29, 32, 33)";
+      surface = "rgb(40, 40, 40)";
+      surfaceElevated = "rgb(60, 56, 54)";
+      surfaceMuted = "rgb(29, 32, 33)";
+      surfaceBorder = "rgb(80, 73, 69)";
+      border = "rgb(102, 92, 84)";
+      borderInactive = "rgb(60, 56, 54)";
+      text = "rgb(235, 219, 178)";
+      textMuted = "rgb(168, 153, 132)";
+      accent = "rgb(254, 128, 25)";
+      accentLight = "rgb(250, 189, 47)";
+      accentTeal = "rgb(142, 192, 124)";
+      danger = "rgb(251, 73, 52)";
     };
   };
 }

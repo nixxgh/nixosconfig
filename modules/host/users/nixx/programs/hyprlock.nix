@@ -7,7 +7,7 @@
       ...
     }:
     {
-      stylix.targets.hyprlock.enable = false;
+      stylix.targets.hyprlock.enable = true;
 
       programs.hyprlock = {
         enable = true;
@@ -18,36 +18,26 @@
             hide_cursor = false;
           };
 
-          background = [
-            {
-              path = "screenshot";
-              blur_passes = 3;
-              blur_size = 8;
-              color = self.theme.rgb.surfaceMuted;
-            }
-          ];
+          background = {
+            path = lib.mkForce "screenshot";
+            blur_passes = 3;
+            blur_size = 8;
+          };
 
-          input-field = [
-            {
-              size = "250, 50";
-              outline_thickness = 2;
-              dots_size = 0.25;
-              dots_spacing = 0.5;
-              dots_center = true;
-              outer_color = self.theme.rgb.accent;
-              inner_color = self.theme.rgb.surfaceBorder;
-              font_color = self.theme.rgb.text;
-              fade_on_empty = false;
-              placeholder_text = "<i>Enter Password...</i>";
-              hide_input = false;
-              check_color = self.theme.rgb.accentLight;
-              fail_color = self.theme.rgb.danger;
-              fail_text = "<i>Authentication Failed</i>";
-              position = "0, -80";
-              halign = "center";
-              valign = "center";
-            }
-          ];
+          input-field = {
+            size = "250, 50";
+            outline_thickness = 2;
+            dots_size = 0.25;
+            dots_spacing = 0.5;
+            dots_center = true;
+            fade_on_empty = false;
+            placeholder_text = "<i>Enter Password...</i>";
+            hide_input = false;
+            fail_text = "<i>Authentication Failed</i>";
+            position = "0, -80";
+            halign = "center";
+            valign = "center";
+          };
 
           label = [
             {

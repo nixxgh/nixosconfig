@@ -10,9 +10,10 @@
         enable = true;
         autoEnable = true;
 
-        # Derive palette and themes directly from the wallpaper snapshot
+        # Derive palette and styling from Gruvbox Dark Hard
         image = ../../../../assets/wallpaper.png;
         polarity = "dark";
+        base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-dark-hard.yaml";
 
         # Opacity & transparency settings
         opacity = {
