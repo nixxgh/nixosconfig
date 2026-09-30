@@ -19,7 +19,13 @@
             };
           };
 
-          window.opacity = 0.75;
+          window = {
+            opacity = 0.75;
+            padding = {
+              x = 12;
+              y = 12;
+            };
+          };
 
           keyboard.bindings = [
             {

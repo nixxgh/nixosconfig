@@ -12,6 +12,7 @@
         wl-clipboard
         libnotify
         pavucontrol
+        mpvpaper
       ];
     };
 }

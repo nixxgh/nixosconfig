@@ -30,11 +30,12 @@
 
           spawn-at-startup = [
             [
-              (lib.getExe pkgs.swaybg)
-              "-i"
-              "/home/nixx/Pictures/Wallpapers/infinite-tsukuyomi-naruto.png"
-              "-m"
-              "fill"
+              (lib.getExe pkgs.mpvpaper)
+              "-p"
+              "-o"
+              "no-audio loop hwdec=auto"
+              "*"
+              "/home/nixx/Pictures/Wallpapers/infinite-tsukuyomi-naruto.3840x2160.mp4"
             ]
           ];
 
@@ -51,7 +52,7 @@
 
           layout = {
             gaps = 5;
-            "background-color" = self.theme.hex.bg;
+            "background-color" = "transparent";
             focus-ring = {
               on = { };
               width = 2;
@@ -66,19 +67,21 @@
           };
 
           extraConfig = ''
-            blur {
-              passes 8
-              offset 8.0
-              noise 0.02
+            layer-rule {
+              match namespace="^mpvpaper$"
+              place-within-backdrop true
+            }
+
+            layer-rule {
+              match namespace="^swaybg$"
+              place-within-backdrop true
             }
 
             window-rule {
               match app-id="Alacritty"
               draw-border-with-background false
               clip-to-geometry true
-              background-effect {
-                blur true
-              }
+              geometry-corner-radius 10
             }
           '';
 
