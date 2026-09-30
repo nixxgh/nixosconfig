@@ -284,7 +284,6 @@ These are environment utilities wired for machine `laptop` and user `nixx`:
 ### 3. Status Bar & Notifications
 - **AGS / Astal Bar**: Custom status bar built with [AGS](https://github.com/aylur/ags) (Astal framework), compiled at build time with Tailwind CSS. Features battery, network, Bluetooth, WirePlumber audio, MPRIS media, notification indicator, system tray, and power profiles via dedicated Astal library modules.
 - **Waybar**: Secondary Waybar config available (bottom bar) showing Niri workspaces, window title, volume, battery, night light toggle, caffeine toggle, notification bell, system tray, and a live clock.
-- **SwayNC**: Notification center (`swaync`) with Do-Not-Disturb, MPRIS media widget, inline replies, and a custom dark-themed stylesheet (JetBrainsMono font, emerald accents).
 
 ### 4. Developer & Terminal Environment
 - **Shell**: **ZSH** with Starship prompt (minimal `directory + git_branch + git_status` format), syntax highlighting, autosuggestions, and a 10,000-line shared history.
@@ -417,8 +416,6 @@ myNixOS/
                     ├── hypridle.nix        # Hypridle idle manager:
                     │                      #   DPMS off after 60s (locked), auto-lock at 3m, DPMS at 4m
                     ├── nm-applet.nix       # NetworkManager system tray applet
-                    ├── swaync.nix          # SwayNC notification center:
-                    │                      #   DND widget, MPRIS, inline replies, dark emerald theme
                     └── wlsunset.nix        # Wlsunset night light (6500K↔4000K + forced-warm 4000K mode)
 ```
 

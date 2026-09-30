@@ -56,13 +56,13 @@
             focus-ring = {
               on = { };
               width = 2;
-              active-color = "#fffff0";
+              active-color = self.theme.hex.accent;
               inactive-color = self.theme.hex.borderInactive;
             };
             border = {
               on = { };
-              active-color = "#36393f";
-              inactive-color = "#36393f";
+              active-color = self.theme.hex.surfaceBorder;
+              inactive-color = self.theme.hex.surfaceMuted;
             };
           };
 
