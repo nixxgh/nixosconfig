@@ -297,7 +297,18 @@
             # Tabbed Column Display
             "Mod+W".toggle-column-tabbed-display = _: { };
 
+            # Screenshots
+            "Mod+Shift+S" = _: {
+              props.hotkey-overlay-title = "Screenshot Region: grim + slurp";
+              content.spawn-sh = "grim -g \"$(slurp)\" ~/Pictures/Screenshots/$(date +'%Y-%m-%d_%H-%M-%S').png";
+            };
+            "Mod+Alt+S" = _: {
+              props.hotkey-overlay-title = "Screenshot Region → Satty";
+              content.spawn-sh = "grim -g \"$(slurp)\" - | satty --filename - --output-filename ~/Pictures/Screenshots/$(date +'%Y-%m-%d_%H-%M-%S').png";
+            };
+
             # Native Screenshots
+
             "Print".screenshot = _: { };
             "Ctrl+Print".screenshot-screen = _: { };
             "Alt+Print".screenshot-window = _: { };
