@@ -13,14 +13,7 @@
       programs.alacritty = {
         enable = true;
         settings = {
-          colors = {
-            primary = {
-              background = self.theme.hex.bg;
-            };
-          };
-
           window = {
-            opacity = 0.75;
             padding = {
               x = 12;
               y = 12;

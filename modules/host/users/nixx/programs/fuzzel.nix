@@ -33,7 +33,6 @@
         enable = true;
         settings = {
           main = {
-            font = "JetBrainsMono Nerd Font:size=13";
             prompt = "\"❯ \"";
             icons-enabled = true;
             terminal = "${pkgs.alacritty}/bin/alacritty";
@@ -43,16 +42,6 @@
             horizontal-pad = 20;
             vertical-pad = 14;
             inner-pad = 8;
-          };
-
-          colors = {
-            background = "${self.theme.raw.surface}ff";
-            text = "${self.theme.raw.text}ff";
-            match = "${self.theme.raw.accentLight}ff";
-            selection = "${self.theme.raw.surfaceElevated}ff";
-            selection-text = "${self.theme.raw.accent}ff";
-            selection-match = "${self.theme.raw.accentLight}ff";
-            border = "${self.theme.raw.border}ff";
           };
 
           border = {

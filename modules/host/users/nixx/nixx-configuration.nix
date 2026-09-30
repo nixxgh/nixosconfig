@@ -34,7 +34,6 @@ in
         self.homeModules.hypridle
         self.homeModules.hyprlock
         self.homeModules.wlsunset
-        self.homeModules.swaybg
         self.homeModules.fuzzel
       ];
 

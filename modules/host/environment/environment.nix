@@ -17,6 +17,7 @@
         self.nixosModules.environmentPackages
         self.nixosModules.fleetUsers
         self.nixosModules.security
+        self.nixosModules.stylix
       ];
 
       # ========================================================================
