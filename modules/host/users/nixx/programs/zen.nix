@@ -11,11 +11,17 @@
         inputs.zen-browser.homeModules.default
       ];
 
-      stylix.targets.zen-browser.profileNames = [ "Default Profile" ];
+      stylix.targets.zen-browser.profileNames = [ "default" ];
 
       programs.zen-browser = {
         enable = true;
         setAsDefaultBrowser = true;
+        profiles.default = {
+          id = 0;
+          name = "Default Profile";
+          isDefault = true;
+          path = "rzitq07l.Default Profile";
+        };
       };
 
       xdg.mimeApps = {
