@@ -55,9 +55,11 @@
         vim.opt.timeoutlen = 300
 
         -- Theme & Statusline (Matching Alacritty Gruvbox Dark Hard & transparency)
+        vim.o.background = "dark"
         require('gruvbox').setup({
           transparent_mode = true,
           contrast = "hard",
+          palette_overrides = {},
           overrides = {
             Normal = { bg = "NONE" },
             NormalNC = { bg = "NONE" },

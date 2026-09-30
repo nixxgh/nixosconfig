@@ -17,8 +17,8 @@
 
         # Opacity & transparency settings
         opacity = {
-          terminal = 0.7;
-          applications = 0.8;
+          terminal = 0.6;
+          applications = 0.75;
           popups = 0.8;
           desktop = 0.8;
         };
