@@ -61,9 +61,16 @@
 
           extraConfig = ''
             blur {
-              passes 4
-              offset 4.0
+              passes 8
+              offset 8.0
               noise 0.02
+            }
+
+            window-rule {
+              match app-id="Alacritty"
+              draw-border-with-background false
+              clip-to-geometry true
+              blur-behind true
             }
           '';
 

@@ -19,6 +19,8 @@
             };
           };
 
+          window.opacity = 0.75;
+
           keyboard.bindings = [
             {
               key = "Return";
