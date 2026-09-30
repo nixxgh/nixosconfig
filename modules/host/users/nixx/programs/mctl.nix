@@ -12,6 +12,7 @@
         import curses
         from importlib.machinery import SourceFileLoader
         import os
+        import re
         import subprocess
         import sys
         import tempfile
@@ -168,9 +169,9 @@
             pm = None
 
         class EmbeddedPulseScreen(pm.Screen if pm else object):
-            def __init__(self, win, h, w):
-                self.screen = win
-                self.update_dimensions(win, h, w)
+            def __init__(self, screen, start_y, start_x, h, w):
+                self.screen = screen
+                self.update_dimensions(screen, start_y, start_x, h, w)
                 self.index = 0
                 self.top_line_num = 0
                 self.focus_line_num = 0
@@ -203,30 +204,123 @@
                 self.action = None
                 self.server_info = pm.PULSE.get_server_info() if pm and pm.PULSE else None
 
-            def update_dimensions(self, win, h, w):
-                self.screen = win
+            def update_dimensions(self, screen, start_y, start_x, h, w):
+                self.screen = screen
+                self.start_y = start_y
+                self.start_x = start_x
                 self.h = h
                 self.w = w
                 self.lines = max(1, h - 2)
-                self.cols = max(10, w - 1)
+                self.cols = max(10, w - 2)
 
             def display_line(self, index, line, mod=curses.A_NORMAL, win=None):
-                target_win = win or self.screen
-                if not (0 <= index < self.h):
+                y = self.start_y + index
+                sh, sw = self.screen.getmaxyx()
+                if not (0 <= y < sh):
                     return
-                shift = 0
+                shift = self.start_x
                 for i in line.split('\n'):
                     parts = i.rsplit('|')
                     head = "".join(parts[:-1])
                     tail = int(parts[-1] or 0)
-                    if 0 <= shift < self.w:
-                        text = head[:self.w - shift - 1]
+                    if 0 <= shift < sw:
+                        text = head[:sw - shift - 1]
                         if text:
                             try:
-                                target_win.addstr(index, shift, text, tail | mod)
+                                self.screen.addstr(y, shift, text, tail | mod)
                             except curses.error:
                                 pass
                     shift += len(head)
+
+            def display(self):
+                top = self.top_line_num
+                bottom = self.top_line_num + self.lines
+                self.display_line(0, self.menu)
+                for index, line in enumerate(self.data[top:bottom]):
+                    bar_item, bartype = line[0], line[1]
+                    if not bar_item:
+                        continue
+                    elif bartype is pm.Bar.NONE:
+                        continue
+
+                    same = []
+                    for i, v in enumerate(self.data[top:bottom]):
+                        if v[0] is self.data[self.top_line_num + self.focus_line_num][0]:
+                            same.append(v[0])
+
+                    tree = ' '
+                    if bar_item.owner == -1 and bar_item.owned > bar_item.channels:
+                        tree = ' │'
+                    if bar_item.owner != -1:
+                        tree = ' │'
+                    if bartype == pm.Bar.LEFT:
+                        if bar_item.owner == -1:
+                            tree = ' '
+                        if bar_item.owner != -1:
+                            tree = ' ├─'
+                            if bar_item.stream_index == bar_item.owned:
+                                tree = ' └─'
+                        if bar_item.channels != 1:
+                            brackets = [pm.CFG.style.bar_top_left, pm.CFG.style.bar_top_right]
+                        else:
+                            brackets = [pm.CFG.style.bar_left_mono, pm.CFG.style.bar_right_mono]
+                    elif bartype == bar_item.channels - 1:
+                        if bar_item.stream_index == bar_item.owned:
+                            tree = ' '
+                        brackets = [pm.CFG.style.bar_bottom_left, pm.CFG.style.bar_bottom_right]
+                    else:
+                        if bar_item.stream_index == bar_item.owned:
+                            tree = ' '
+                        brackets = ['├', '┤']
+
+                    focus_hl, bracket_hl, arrow, gradient = 0, 0, pm.CFG.style.arrow, self.gradient
+                    if index == self.focus_line_num:
+                        focus_hl = bracket_hl = curses.A_BOLD
+                        arrow = pm.CFG.style.arrow_focused
+                    elif bar_item in same:
+                        focus_hl = curses.A_BOLD
+                        if bar_item.locked:
+                            bracket_hl = curses.A_BOLD
+                            arrow = pm.CFG.style.arrow_locked
+                    elif not bar_item.muted and self.color_mode != 2:
+                        gradient = self.gray_gradient
+
+                    if bar_item.muted:
+                        bracket_hl = bracket_hl | self.red
+                        focus_hl = focus_hl | self.muted_color
+
+                    off = 6 * (self.cols // (43 if self.cols <= 60 else 25)) - len(tree)
+                    cols = self.cols - 31 - off - len(tree)
+                    vol = list(pm.CFG.style.bar_off * (cols - (cols % 3 != 0)))
+                    n = int(len(vol) * bar_item.volume[bartype] / bar_item.maxsize)
+                    if bar_item.muted:
+                        vol[:n] = pm.CFG.style.bar_on_muted * n
+                    else:
+                        vol[:n] = pm.CFG.style.bar_on * n
+                    vol = "".join(vol)
+                    if bartype is pm.Bar.LEFT:
+                        if self.server_info and bar_item.pa.name in (self.server_info.default_sink_name, self.server_info.default_source_name):
+                            tree = pm.CFG.style.default_stream
+                        name = f"{bar_item.name}{bar_item.media_name}"
+                        if len(name) > 20 + off:
+                            name = name[:20 + off].strip() + '~'
+                        line = f"{name:<{22 + off}}|{focus_hl}\n {bar_item.volume[0]:<3}|{focus_hl}\n "
+                    elif bartype is pm.Bar.RIGHT:
+                        sp1 = " " * (21 + off)
+                        sp2 = " " * 3
+                        line = f"{sp1}|{self.red if bar_item.locked else curses.A_DIM}\n {sp2}|{self.red if bar_item.muted else curses.A_DIM}\n {bar_item.volume[bartype]:<3}|{focus_hl}\n "
+                    else:
+                        sp3 = " " * (23 + off)
+                        line = f"{sp3}{bar_item.volume[bartype]:<3}|{focus_hl}\n "
+
+                    volbar = ""
+                    chunk_sz = max(1, len(vol) // 3)
+                    for i, v in enumerate(re.findall(r'.{{{}}}'.format(chunk_sz), vol)):
+                        volbar += f"\n{v}|{gradient[min(i, len(gradient)-1)] | focus_hl}"
+
+                    line += f"{arrow:>1}|{curses.A_BOLD}\n{brackets[0]}|{bracket_hl}{volbar}\n{brackets[1]}|{bracket_hl}\n{arrow}|{curses.A_BOLD}"
+                    self.display_line(index + 1, tree + "|0\n" + line)
+                self.display_line(self.lines + 1, self.info)
 
         def main(stdscr):
             curses.curs_set(0)
@@ -323,8 +417,6 @@
                 curses.color_pair(1) | curses.A_BOLD,  # Cyan (base)
             ]
 
-            # Initialize Embedded Pulsemixer Subwindow
-            pm_win = None
             eps = None
             old_h, old_w = 0, 0
 
@@ -353,18 +445,14 @@
                     pm_h = max(3, ctrl_y1 - 1 - pm_start_y)
                     pm_w = max(10, w - 2)
 
-                    # Manage pulsemixer subwindow resize / instantiation
-                    if (h, w) != (old_h, old_w) or pm_win is None:
+                    # Manage pulsemixer dimensions directly on stdscr
+                    if (h, w) != (old_h, old_w) or eps is None:
                         old_h, old_w = h, w
-                        try:
-                            pm_win = curses.newwin(pm_h, pm_w, pm_start_y, 1)
-                        except Exception:
-                            pm_win = None
                         if pm and pm.PULSE and pm.PULSE.connected:
-                            if eps is None and pm_win:
-                                eps = EmbeddedPulseScreen(pm_win, pm_h, pm_w)
-                            elif eps and pm_win:
-                                eps.update_dimensions(pm_win, pm_h, pm_w)
+                            if eps is None:
+                                eps = EmbeddedPulseScreen(stdscr, pm_start_y, 1, pm_h, pm_w)
+                            else:
+                                eps.update_dimensions(stdscr, pm_start_y, 1, pm_h, pm_w)
 
                     # Auto-commit drag if no events arrived for 0.4s
                     if drag_mode is not None and now - last_drag_time > 0.4:
@@ -506,14 +594,12 @@
                     # Separator above Pulsemixer section
                     safe_addstr(stdscr, btn_row + 1, 2, "─" * max(0, w - 4), curses.color_pair(1))
 
-                    # Render Pulsemixer UI in subwindow
-                    if eps and pm_win:
+                    # Render Pulsemixer UI directly to stdscr
+                    if eps:
                         try:
-                            pm_win.erase()
                             eps.update_menu()
                             eps.update_info()
                             eps.display()
-                            pm_win.noutrefresh()
                         except Exception:
                             pass
 
@@ -571,8 +657,8 @@
                         last_pm_poll = 0
                     elif key in (ord('k'), curses.KEY_UP) and eps and eps.data:
                         focus = eps.top_line_num + eps.focus_line_num
-                        bar = eps.data[focus][0] if focus < len(eps.data) else None
-                        if bar and bar.locked:
+                        stream_bar = eps.data[focus][0] if focus < len(eps.data) else None
+                        if stream_bar and stream_bar.locked:
                             n = 1 if eps.data[focus][1] == 0 else eps.data[focus][1] + 1
                             for _ in range(n): eps.scroll(eps.UP)
                         else:
@@ -581,8 +667,8 @@
                             eps.scroll(eps.UP)
                     elif key in (ord('j'), curses.KEY_DOWN) and eps and eps.data:
                         focus = eps.top_line_num + eps.focus_line_num
-                        bar = eps.data[focus][0] if focus < len(eps.data) else None
-                        if bar and bar.locked:
+                        stream_bar = eps.data[focus][0] if focus < len(eps.data) else None
+                        if stream_bar and stream_bar.locked:
                             n = 1 if eps.data[focus][1] == eps.data[focus][3] - 1 else ((eps.data[focus][3] - 1) - eps.data[focus][1]) + 1
                             for _ in range(n): eps.scroll(eps.DOWN)
                         else:
@@ -592,31 +678,31 @@
                     elif key in (ord('h'), curses.KEY_LEFT, ord('-')) and eps and eps.data:
                         focus = eps.top_line_num + eps.focus_line_num
                         if focus < len(eps.data):
-                            bar, side = eps.data[focus][0], eps.data[focus][1]
-                            if bar:
-                                bar.move(-2, side)
+                            stream_bar, side = eps.data[focus][0], eps.data[focus][1]
+                            if stream_bar:
+                                stream_bar.move(-2, side)
                                 last_pm_poll = 0
                     elif key in (ord('l'), curses.KEY_RIGHT, ord('+'), ord('=')) and eps and eps.data:
                         focus = eps.top_line_num + eps.focus_line_num
                         if focus < len(eps.data):
-                            bar, side = eps.data[focus][0], eps.data[focus][1]
-                            if bar:
-                                bar.move(2, side)
+                            stream_bar, side = eps.data[focus][0], eps.data[focus][1]
+                            if stream_bar:
+                                stream_bar.move(2, side)
                                 last_pm_poll = 0
                     elif key in (ord('m'), ord('M')) and eps and eps.data:
                         focus = eps.top_line_num + eps.focus_line_num
                         if focus < len(eps.data):
-                            bar = eps.data[focus][0]
-                            if bar:
-                                bar.mute_toggle()
+                            stream_bar = eps.data[focus][0]
+                            if stream_bar:
+                                stream_bar.mute_toggle()
                                 last_pm_poll = 0
                     elif ord('0') <= key <= ord('9') and eps and eps.data:
                         focus = eps.top_line_num + eps.focus_line_num
                         if focus < len(eps.data):
-                            bar, side = eps.data[focus][0], eps.data[focus][1]
-                            if bar:
+                            stream_bar, side = eps.data[focus][0], eps.data[focus][1]
+                            if stream_bar:
                                 pct = 100 if key == ord('0') else (key - ord('0')) * 10
-                                bar.set(pct, side)
+                                stream_bar.set(pct, side)
                                 last_pm_poll = 0
                     elif key == curses.KEY_MOUSE:
                         try:
