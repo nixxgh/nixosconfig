@@ -76,7 +76,9 @@
               match app-id="Alacritty"
               draw-border-with-background false
               clip-to-geometry true
-              blur-behind true
+              background-effect {
+                blur true
+              }
             }
           '';
 
