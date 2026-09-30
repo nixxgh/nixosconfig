@@ -71,17 +71,17 @@
 
           # Clean, minimal status bar
           set -g status-position bottom
-          set -g status-style "bg=default,fg=colour7"
-          set -g status-left "#[bold,fg=green][#S] "
-          set -g status-right "#[fg=cyan]%H:%M #[fg=white]%d-%b"
-          set -g window-status-current-format "#[bold,fg=yellow]● #I:#W"
-          set -g window-status-format "#[fg=colour8]○ #I:#W"
+          set -g status-style "bg=default,fg=${self.theme.hex.textMuted}"
+          set -g status-left "#[bold,fg=${self.theme.hex.accentTeal}][#S] "
+          set -g status-right "#[fg=${self.theme.hex.accentLight}]%H:%M #[fg=${self.theme.hex.text}]%d-%b"
+          set -g window-status-current-format "#[bold,fg=${self.theme.hex.accent}]● #I:#W"
+          set -g window-status-format "#[fg=${self.theme.hex.border}]○ #I:#W"
 
           # Seamless terminal transparency & background matching
           set -g window-style "bg=default"
           set -g window-active-style "bg=default"
-          set -g pane-border-style "fg=#3c3836,bg=default"
-          set -g pane-active-border-style "fg=#fe8019,bg=default"
+          set -g pane-border-style "fg=${self.theme.hex.borderInactive},bg=default"
+          set -g pane-active-border-style "fg=${self.theme.hex.accent},bg=default"
         '';
       };
     };

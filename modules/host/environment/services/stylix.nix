@@ -17,10 +17,10 @@
 
         # Opacity & transparency settings
         opacity = {
-          terminal = 0.8;
-          applications = 0.85;
-          popups = 0.85;
-          desktop = 0.85;
+          terminal = 0.7;
+          applications = 0.8;
+          popups = 0.8;
+          desktop = 0.8;
         };
 
         # Fonts
