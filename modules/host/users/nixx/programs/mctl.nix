@@ -10,8 +10,11 @@
       mctlPkg = pkgs.writeScriptBin "mctl" ''
         #!${pkgs.python3}/bin/python3
         import curses
+        import os
         import subprocess
         import sys
+        import tempfile
+        import threading
         import time
 
         def run_cmd(cmd):
@@ -110,7 +113,7 @@
 
         def prompt_seek(stdscr, h, w, media):
             prompt = "Seek to (e.g. 1:30, 45, +15s, 50%): "
-            py = min(h - 1, 10)
+            py = min(h - 1, 11)
             safe_addstr(stdscr, py, 2, " " * (w - 4))
             safe_addstr(stdscr, py, 2, prompt, curses.color_pair(5) | curses.A_BOLD)
             stdscr.refresh()
@@ -123,7 +126,7 @@
                 inp = ""
             curses.noecho()
             curses.curs_set(0)
-            stdscr.timeout(500)
+            stdscr.timeout(35)
             if not inp:
                 return None
 
@@ -173,11 +176,10 @@
                 curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
             except Exception:
                 pass
-            # Enable button-motion mouse tracking in terminal emulators
             sys.stdout.write("\033[?1002h")
             sys.stdout.flush()
 
-            stdscr.timeout(500)
+            stdscr.timeout(35)
             curses.start_color()
             curses.use_default_colors()
 
@@ -186,6 +188,58 @@
             curses.init_pair(3, curses.COLOR_MAGENTA, -1)
             curses.init_pair(4, curses.COLOR_RED, -1)
             curses.init_pair(5, curses.COLOR_YELLOW, -1)
+
+            # Spawn embedded CAVA visualizer
+            cava_cfg = """[general]
+bars = 48
+framerate = 30
+[input]
+method = pipewire
+[output]
+method = raw
+raw_target = /dev/stdout
+data_format = ascii
+ascii_max_range = 16
+bar_delimiter = 59
+frame_delimiter = 10
+[smoothing]
+noise_reduction = 77
+"""
+            cava_tmp = tempfile.NamedTemporaryFile("w", delete=False)
+            cava_tmp.write(cava_cfg)
+            cava_tmp.flush()
+            cava_cfg_path = cava_tmp.name
+            cava_tmp.close()
+
+            cava_data = [[]]
+            try:
+                cava_proc = subprocess.Popen(
+                    ["${pkgs.cava}/bin/cava", "-p", cava_cfg_path],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    bufsize=1
+                )
+            except Exception:
+                cava_proc = None
+
+            def cava_worker():
+                if not cava_proc or not cava_proc.stdout:
+                    return
+                while True:
+                    line = cava_proc.stdout.readline()
+                    if not line:
+                        break
+                    try:
+                        vals = [int(x) for x in line.strip().split(';') if x.isdigit()]
+                        if vals:
+                            cava_data[0] = vals
+                    except Exception:
+                        pass
+
+            if cava_proc:
+                t = threading.Thread(target=cava_worker, daemon=True)
+                t.start()
 
             seek_target = None
             seek_time = 0.0
@@ -200,11 +254,18 @@
             last_drag_time = 0.0
             btn_regions = []
 
+            blocks = [" ", " ", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
+
             try:
                 while True:
                     now = time.time()
                     h, w = stdscr.getmaxyx()
                     b_width = max(10, min(28, w - 32))
+
+                    cava_lines = 2 if h >= 14 else 1
+                    time_row = 5 + cava_lines
+                    btn_row = 6 + cava_lines
+                    vol_row = 7 + cava_lines
 
                     # Auto-commit drag if no events arrived for 0.4s
                     if drag_mode is not None and now - last_drag_time > 0.4:
@@ -216,11 +277,11 @@
                             fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", f"{drag_val}%"])
                             vol_lock = (drag_val, now)
                         drag_mode = None
-                        stdscr.timeout(500)
+                        stdscr.timeout(35)
 
-                    # Only poll external commands when not actively dragging
+                    # Poll external MPRIS and WirePlumber commands decoupled from 30fps visualizer
                     if drag_mode is None:
-                        if now - last_poll_time >= 0.4:
+                        if now - last_poll_time >= 0.35:
                             cached_media = get_media()
                             cached_vol = get_volume()
                             last_poll_time = now
@@ -257,38 +318,56 @@
 
                     stdscr.erase()
 
-                    # Render Header
-                    title_str = " 🎵 MEDIA & AUDIO CONTROLLER "
-                    safe_addstr(stdscr, 1, max(0, (w - len(title_str)) // 2), title_str, curses.color_pair(3) | curses.A_BOLD)
-                    safe_addstr(stdscr, 2, 2, "─" * max(0, w - 4), curses.color_pair(1))
+                    # Render Embedded CAVA Visualizer (Replacing old Header Banner)
+                    raw_bars = cava_data[0] if cava_data[0] else [0] * 32
+                    vis_width = min(len(raw_bars), max(16, min(48, w - 8)))
+                    bars_to_show = raw_bars[:vis_width]
+
+                    if cava_lines == 2:
+                        top_chars = [blocks[max(0, min(8, v - 8))] if v > 8 else " " for v in bars_to_show]
+                        bot_chars = ["█" if v >= 8 else blocks[max(0, min(8, v))] for v in bars_to_show]
+                        top_str = "".join(top_chars)
+                        bot_str = "".join(bot_chars)
+                        cx = max(2, (w - len(top_str)) // 2)
+                        safe_addstr(stdscr, 1, cx, top_str, curses.color_pair(3) | curses.A_BOLD)  # Magenta peaks
+                        safe_addstr(stdscr, 2, cx, bot_str, curses.color_pair(1) | curses.A_BOLD)  # Cyan base
+                        safe_addstr(stdscr, 3, 2, "─" * max(0, w - 4), curses.color_pair(1))
+                    else:
+                        line_chars = [blocks[max(0, min(8, v // 2))] for v in bars_to_show]
+                        line_str = "".join(line_chars)
+                        cx = max(2, (w - len(line_str)) // 2)
+                        safe_addstr(stdscr, 1, cx, line_str, curses.color_pair(1) | curses.A_BOLD)
+                        safe_addstr(stdscr, 2, 2, "─" * max(0, w - 4), curses.color_pair(1))
+
+                    info_start_y = 1 + cava_lines + 1
 
                     # Media Info
                     if media:
                         stat_icon = "▶" if media["status"] == "Playing" else ("⏸" if media["status"] == "Paused" else "⏹")
                         stat_color = curses.color_pair(2) if media["status"] == "Playing" else curses.color_pair(5)
 
-                        safe_addstr(stdscr, 3, 3, "Player : ", curses.A_BOLD)
-                        safe_addstr(stdscr, 3, 12, f"{media['player'].capitalize()} [{stat_icon} {media['status']}]", stat_color | curses.A_BOLD)
+                        safe_addstr(stdscr, info_start_y, 3, "Player : ", curses.A_BOLD)
+                        safe_addstr(stdscr, info_start_y, 12, f"{media['player'].capitalize()} [{stat_icon} {media['status']}]", stat_color | curses.A_BOLD)
 
-                        safe_addstr(stdscr, 4, 3, "Track  : ", curses.A_BOLD)
-                        safe_addstr(stdscr, 4, 12, media['title'] or 'Unknown Title', curses.A_BOLD)
+                        safe_addstr(stdscr, info_start_y + 1, 3, "Track  : ", curses.A_BOLD)
+                        safe_addstr(stdscr, info_start_y + 1, 12, media['title'] or 'Unknown Title', curses.A_BOLD)
 
-                        safe_addstr(stdscr, 5, 3, "Artist : ", curses.A_BOLD)
-                        safe_addstr(stdscr, 5, 12, media['artist'] or 'Unknown Artist', curses.color_pair(1))
+                        safe_addstr(stdscr, info_start_y + 2, 3, "Artist : ", curses.A_BOLD)
+                        safe_addstr(stdscr, info_start_y + 2, 12, media['artist'] or 'Unknown Artist', curses.color_pair(1))
 
-                        # Progress Bar Slider (Line 6)
-                        safe_addstr(stdscr, 6, 3, "Time   : ", curses.A_BOLD)
+                        # Progress Bar Slider (time_row)
+                        safe_addstr(stdscr, time_row, 3, "Time   : ", curses.A_BOLD)
                         if media["length"] > 0:
                             prog_bar = f"[{bar(display_pos, media['length'], b_width)}]"
                             drag_tag = " (scrubbing)" if drag_mode == 'progress' else ""
                             time_str = f" {fmt_time(display_pos)} / {fmt_time(media['length'])}{drag_tag}"
-                            safe_addstr(stdscr, 6, 12, prog_bar)
-                            safe_addstr(stdscr, 6, 12 + len(prog_bar), time_str, curses.color_pair(2) if drag_mode != 'progress' else curses.color_pair(5))
+                            safe_addstr(stdscr, time_row, 12, prog_bar)
+                            safe_addstr(stdscr, time_row, 12 + len(prog_bar), time_str, curses.color_pair(2) if drag_mode != 'progress' else curses.color_pair(5))
                         else:
-                            safe_addstr(stdscr, 6, 12, f"{fmt_time(display_pos)} (Live stream / unknown length)", curses.A_DIM)
+                            safe_addstr(stdscr, time_row, 12, f"{fmt_time(display_pos)} (Live stream / unknown length)", curses.A_DIM)
 
-                        # 5 Interactive Control Buttons under Progress Bar (Line 7)
-                        safe_addstr(stdscr, 7, 3, "Control: ", curses.A_BOLD)
+                        # 5 Interactive Control Buttons under Progress Bar (btn_row)
+                        safe_addstr(stdscr, btn_row, 3, "Control: ", curses.A_BOLD)
                         is_playing = media["status"] == "Playing"
                         if w >= 58:
                             b1 = "[⏮ Prev]"
@@ -315,32 +394,32 @@
                         bx = 12
                         spacing = 2 if w >= 58 else 1
                         for action, text, color in btns_data:
-                            safe_addstr(stdscr, 7, bx, text, color)
+                            safe_addstr(stdscr, btn_row, bx, text, color)
                             btn_regions.append((action, bx, bx + len(text)))
                             bx += len(text) + spacing
                     else:
-                        safe_addstr(stdscr, 3, 3, "Player : ", curses.A_BOLD)
-                        safe_addstr(stdscr, 3, 12, "Idle", curses.A_DIM)
-                        safe_addstr(stdscr, 4, 3, "Track  : ", curses.A_BOLD)
-                        safe_addstr(stdscr, 4, 12, "No active MPRIS player detected", curses.color_pair(5))
-                        safe_addstr(stdscr, 5, 3, "Artist : ", curses.A_BOLD)
-                        safe_addstr(stdscr, 5, 12, "(Start Spotify, Zen Browser, or MPV)", curses.A_DIM)
-                        safe_addstr(stdscr, 6, 3, "Time   : ", curses.A_BOLD)
-                        safe_addstr(stdscr, 6, 12, "--:-- / --:--", curses.A_DIM)
-                        safe_addstr(stdscr, 7, 3, "Control: ", curses.A_BOLD)
-                        safe_addstr(stdscr, 7, 12, "[⏮ Prev]  [-10s]  [▶ Play]  [+10s]  [Next ⏭]", curses.A_DIM)
+                        safe_addstr(stdscr, info_start_y, 3, "Player : ", curses.A_BOLD)
+                        safe_addstr(stdscr, info_start_y, 12, "Idle", curses.A_DIM)
+                        safe_addstr(stdscr, info_start_y + 1, 3, "Track  : ", curses.A_BOLD)
+                        safe_addstr(stdscr, info_start_y + 1, 12, "No active MPRIS player detected", curses.color_pair(5))
+                        safe_addstr(stdscr, info_start_y + 2, 3, "Artist : ", curses.A_BOLD)
+                        safe_addstr(stdscr, info_start_y + 2, 12, "(Start Spotify, Zen Browser, or MPV)", curses.A_DIM)
+                        safe_addstr(stdscr, time_row, 3, "Time   : ", curses.A_BOLD)
+                        safe_addstr(stdscr, time_row, 12, "--:-- / --:--", curses.A_DIM)
+                        safe_addstr(stdscr, btn_row, 3, "Control: ", curses.A_BOLD)
+                        safe_addstr(stdscr, btn_row, 12, "[⏮ Prev]  [-10s]  [▶ Play]  [+10s]  [Next ⏭]", curses.A_DIM)
                         btn_regions = []
 
-                    # Volume Info (Line 8)
+                    # Volume Info (vol_row)
                     vol_icon = "🔇 MUTED" if muted else f"🔊 {display_vol}%"
                     vol_color = curses.color_pair(4) if muted else curses.color_pair(2)
-                    safe_addstr(stdscr, 8, 3, "Volume : ", curses.A_BOLD)
+                    safe_addstr(stdscr, vol_row, 3, "Volume : ", curses.A_BOLD)
                     vol_bar = f"[{bar(display_vol, 100, b_width)}]"
-                    safe_addstr(stdscr, 8, 12, vol_bar)
-                    safe_addstr(stdscr, 8, 12 + len(vol_bar), f" {vol_icon}", vol_color | curses.A_BOLD)
+                    safe_addstr(stdscr, vol_row, 12, vol_bar)
+                    safe_addstr(stdscr, vol_row, 12 + len(vol_bar), f" {vol_icon}", vol_color | curses.A_BOLD)
 
                     # Controls Footer
-                    ctrl_y1 = max(10, h - 3)
+                    ctrl_y1 = max(vol_row + 2, h - 3)
                     ctrl_y2 = ctrl_y1 + 1
                     safe_addstr(stdscr, ctrl_y1 - 1, 2, "─" * max(0, w - 4), curses.color_pair(1))
                     ctrls1 = "[Space] Play/Pause   [u/i] Prev/Next Track   [h/l] Seek ±10s   [0-9] %"
@@ -417,8 +496,8 @@
                             is_release = bool(bstate & (curses.BUTTON1_RELEASED | curses.BUTTON1_CLICKED))
                             is_motion = bool(bstate & curses.REPORT_MOUSE_POSITION) or (drag_mode is not None and not is_release)
 
-                            # Handle button click on Line 7 (5 buttons under progress bar)
-                            if my == 7 and is_press and drag_mode is None:
+                            # Handle button click on btn_row (5 buttons under progress bar)
+                            if my == btn_row and is_press and drag_mode is None:
                                 for action, x1, x2 in btn_regions:
                                     if x1 <= mx <= x2:
                                         if action == "prev":
@@ -440,14 +519,14 @@
                                         curses.flushinp()
                                         break
 
-                            # Handle initial press on progress bar (Line 6) or volume bar (Line 8)
+                            # Handle initial press on progress bar (time_row) or volume bar (vol_row)
                             if is_press and drag_mode is None:
-                                if my == 6 and media and media["length"] > 0 and (12 <= mx <= 13 + b_width):
+                                if my == time_row and media and media["length"] > 0 and (12 <= mx <= 13 + b_width):
                                     drag_mode = 'progress'
                                     drag_val = int(media["length"] * x_to_ratio(mx, b_width))
                                     last_drag_time = now_m
                                     stdscr.timeout(20)
-                                elif my == 8 and (12 <= mx <= 13 + b_width):
+                                elif my == vol_row and (12 <= mx <= 13 + b_width):
                                     drag_mode = 'volume'
                                     drag_val = int(x_to_ratio(mx, b_width) * 100)
                                     last_drag_time = now_m
@@ -460,7 +539,6 @@
                                     drag_val = int(media["length"] * x_to_ratio(mx, b_width))
                                 elif drag_mode == 'volume':
                                     drag_val = int(x_to_ratio(mx, b_width) * 100)
-                                    # Live volume update throttled to 80ms
                                     if now_m - last_vol_cmd > 0.08:
                                         last_vol_cmd = now_m
                                         fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", f"{drag_val}%"])
@@ -478,13 +556,24 @@
                                     vol_lock = (drag_val, now_m)
                                     fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", f"{drag_val}%"])
                                 drag_mode = None
-                                stdscr.timeout(500)
+                                stdscr.timeout(35)
                                 curses.flushinp()
                         except Exception:
                             pass
             finally:
                 sys.stdout.write("\033[?1002l")
                 sys.stdout.flush()
+                if cava_proc:
+                    try:
+                        cava_proc.terminate()
+                        cava_proc.wait(timeout=0.3)
+                    except Exception:
+                        pass
+                try:
+                    if os.path.exists(cava_cfg_path):
+                        os.remove(cava_cfg_path)
+                except Exception:
+                    pass
 
         if __name__ == "__main__":
             try:
