@@ -33,6 +33,7 @@ in
         self.homeModules.hyprlock
         self.homeModules.wlsunset
         self.homeModules.swaybg
+        self.homeModules.fuzzel
       ];
 
       home.username = userName;

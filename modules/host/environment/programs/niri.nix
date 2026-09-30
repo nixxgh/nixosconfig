@@ -73,7 +73,7 @@
             };
             "Mod+D" = _: {
               props.hotkey-overlay-title = "Run an Application: fuzzel";
-              content.spawn = "fuzzel";
+              content.spawn = lib.getExe pkgs.fuzzel;
             };
             "Super+Alt+L" = _: {
               props.hotkey-overlay-title = "Lock the Screen: swaylock";
