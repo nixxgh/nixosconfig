@@ -37,7 +37,6 @@
         # Store & Garbage Collection
         cleanenvironment = "sudo nix-collect-garbage -d && nix store optimise";
         forcecleanall = "(nix-env --delete-generations old -p ~/.local/state/nix/profiles/home-manager 2>/dev/null || true) && nix-collect-garbage -d && sudo nix-collect-garbage -d && nix store optimise";
-        nixclean = "forcecleanall";
 
         # ── 2. Machine & Tooling Utilities (Reference Implementation) ─────────
         ff = "fastfetch";

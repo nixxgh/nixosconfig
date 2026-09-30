@@ -246,7 +246,6 @@ Every fleet and machine instantiated from the templates inherits these immutable
 | `rebuildhome`        | `#${userName}`          | Rebuilds user space only (`home-manager switch --flake .#<user>`)                        | **100% Unprivileged**  |
 | `updatehome`         | `#${userName}`          | Updates `flake.lock` and rebuilds user space only                                        | **100% Unprivileged**  |
 | `cleanhome`          | `#${userName}`          | Purges old user & Home Manager generations, collects user garbage (zero sudo required)   | **100% Unprivileged**  |
-| `nixclean`           | Both User & System      | Alias to `forcecleanall` (for backward compatibility)                                    | Requires `sudo`        |
 
 ---
 
