@@ -99,8 +99,8 @@
               content.spawn-sh = "pkill -x fuzzel || ${lib.getExe pkgs.fuzzel}";
             };
             "Super+Alt+L" = _: {
-              props.hotkey-overlay-title = "Lock the Screen: swaylock";
-              content.spawn = "swaylock";
+              props.hotkey-overlay-title = "Lock the Screen: hyprlock";
+              content.spawn = "${pkgs.hyprlock}/bin/hyprlock";
             };
 
             # Screen reader
