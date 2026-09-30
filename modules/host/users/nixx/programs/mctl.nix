@@ -190,21 +190,22 @@
             curses.init_pair(5, curses.COLOR_YELLOW, -1)
 
             # Spawn embedded CAVA visualizer
-            cava_cfg = """[general]
-bars = 48
-framerate = 30
-[input]
-method = pipewire
-[output]
-method = raw
-raw_target = /dev/stdout
-data_format = ascii
-ascii_max_range = 16
-bar_delimiter = 59
-frame_delimiter = 10
-[smoothing]
-noise_reduction = 77
-"""
+            cava_cfg = (
+                "[general]\n"
+                "bars = 48\n"
+                "framerate = 30\n"
+                "[input]\n"
+                "method = pipewire\n"
+                "[output]\n"
+                "method = raw\n"
+                "raw_target = /dev/stdout\n"
+                "data_format = ascii\n"
+                "ascii_max_range = 16\n"
+                "bar_delimiter = 59\n"
+                "frame_delimiter = 10\n"
+                "[smoothing]\n"
+                "noise_reduction = 77\n"
+            )
             cava_tmp = tempfile.NamedTemporaryFile("w", delete=False)
             cava_tmp.write(cava_cfg)
             cava_tmp.flush()
