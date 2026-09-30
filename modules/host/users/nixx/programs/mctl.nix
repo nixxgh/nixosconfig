@@ -11,6 +11,7 @@
         #!${pkgs.python3}/bin/python3
         import curses
         import subprocess
+        import sys
         import time
 
         def run_cmd(cmd):
@@ -99,6 +100,14 @@
                 except curses.error:
                     pass
 
+        def x_to_ratio(mx, b_width):
+            if mx <= 13:
+                return 0.0
+            elif mx >= 12 + b_width:
+                return 1.0
+            else:
+                return (mx - 13) / max(1, b_width - 1)
+
         def prompt_seek(stdscr, h, w, media):
             prompt = "Seek to (e.g. 1:30, 45, +15s, 50%): "
             py = min(h - 1, 9)
@@ -161,9 +170,13 @@
         def main(stdscr):
             curses.curs_set(0)
             try:
-                curses.mousemask(curses.BUTTON1_CLICKED | curses.BUTTON1_PRESSED | curses.BUTTON1_RELEASED)
+                curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
             except Exception:
                 pass
+            # Enable button-motion mouse tracking in terminal emulators
+            sys.stdout.write("\033[?1002h")
+            sys.stdout.flush()
+
             stdscr.timeout(500)
             curses.start_color()
             curses.use_default_colors()
@@ -177,190 +190,241 @@
             seek_target = None
             seek_time = 0.0
             vol_lock = None
-            last_mouse_time = 0.0
+            last_vol_cmd = 0.0
+            cached_media = None
+            cached_vol = (0, False)
+            last_poll_time = 0.0
 
-            while True:
-                now = time.time()
-                h, w = stdscr.getmaxyx()
-                
-                # Fetch state first before erasing screen buffer
-                media = get_media()
-                vol, muted = get_volume()
+            drag_mode = None  # None, 'progress', or 'volume'
+            drag_val = 0
+            last_drag_time = 0.0
 
-                # Smooth display position: prevent jumping when player updates position asynchronously
-                display_pos = media["pos"] if media else 0
-                if seek_target is not None:
-                    if now - seek_time < 1.0:
-                        if abs((media["pos"] if media else 0) - seek_target) > 3:
-                            display_pos = seek_target
+            try:
+                while True:
+                    now = time.time()
+                    h, w = stdscr.getmaxyx()
+                    b_width = max(10, min(28, w - 32))
+
+                    # Auto-commit drag if no events arrived for 0.4s
+                    if drag_mode is not None and now - last_drag_time > 0.4:
+                        if drag_mode == 'progress' and cached_media:
+                            fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", str(drag_val)])
+                            seek_target = drag_val
+                            seek_time = now
+                        elif drag_mode == 'volume':
+                            fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", f"{drag_val}%"])
+                            vol_lock = (drag_val, now)
+                        drag_mode = None
+                        stdscr.timeout(500)
+
+                    # Only poll external commands when not actively dragging
+                    if drag_mode is None:
+                        if now - last_poll_time >= 0.4:
+                            cached_media = get_media()
+                            cached_vol = get_volume()
+                            last_poll_time = now
+                    media = cached_media
+                    vol, muted = cached_vol
+
+                    # Calculate display position
+                    if drag_mode == 'progress':
+                        display_pos = drag_val
+                    elif seek_target is not None:
+                        if now - seek_time < 1.0:
+                            if abs((media["pos"] if media else 0) - seek_target) > 3:
+                                display_pos = seek_target
+                            else:
+                                seek_target = None
+                                display_pos = media["pos"] if media else 0
                         else:
                             seek_target = None
+                            display_pos = media["pos"] if media else 0
                     else:
-                        seek_target = None
+                        display_pos = media["pos"] if media else 0
 
-                # Smooth display volume
-                display_vol = vol
-                if vol_lock is not None:
-                    if now - vol_lock[1] < 0.8:
-                        display_vol = vol_lock[0]
+                    # Calculate display volume
+                    if drag_mode == 'volume':
+                        display_vol = drag_val
+                    elif vol_lock is not None:
+                        if now - vol_lock[1] < 0.8:
+                            display_vol = vol_lock[0]
+                        else:
+                            vol_lock = None
+                            display_vol = vol
                     else:
-                        vol_lock = None
+                        display_vol = vol
 
-                stdscr.erase()
+                    stdscr.erase()
 
-                # Render Header
-                title_str = " 🎵 MEDIA & AUDIO CONTROLLER "
-                safe_addstr(stdscr, 1, max(0, (w - len(title_str)) // 2), title_str, curses.color_pair(3) | curses.A_BOLD)
-                safe_addstr(stdscr, 2, 2, "─" * max(0, w - 4), curses.color_pair(1))
+                    # Render Header
+                    title_str = " 🎵 MEDIA & AUDIO CONTROLLER "
+                    safe_addstr(stdscr, 1, max(0, (w - len(title_str)) // 2), title_str, curses.color_pair(3) | curses.A_BOLD)
+                    safe_addstr(stdscr, 2, 2, "─" * max(0, w - 4), curses.color_pair(1))
 
-                # Media Info
-                b_width = max(10, min(28, w - 32))
-                if media:
-                    stat_icon = "▶" if media["status"] == "Playing" else ("⏸" if media["status"] == "Paused" else "⏹")
-                    stat_color = curses.color_pair(2) if media["status"] == "Playing" else curses.color_pair(5)
-                    
-                    safe_addstr(stdscr, 3, 3, "Player : ", curses.A_BOLD)
-                    safe_addstr(stdscr, 3, 12, f"{media['player'].capitalize()} [{stat_icon} {media['status']}]", stat_color | curses.A_BOLD)
+                    # Media Info
+                    if media:
+                        stat_icon = "▶" if media["status"] == "Playing" else ("⏸" if media["status"] == "Paused" else "⏹")
+                        stat_color = curses.color_pair(2) if media["status"] == "Playing" else curses.color_pair(5)
 
-                    safe_addstr(stdscr, 4, 3, "Track  : ", curses.A_BOLD)
-                    safe_addstr(stdscr, 4, 12, media['title'] or 'Unknown Title', curses.A_BOLD)
+                        safe_addstr(stdscr, 3, 3, "Player : ", curses.A_BOLD)
+                        safe_addstr(stdscr, 3, 12, f"{media['player'].capitalize()} [{stat_icon} {media['status']}]", stat_color | curses.A_BOLD)
 
-                    safe_addstr(stdscr, 5, 3, "Artist : ", curses.A_BOLD)
-                    safe_addstr(stdscr, 5, 12, media['artist'] or 'Unknown Artist', curses.color_pair(1))
+                        safe_addstr(stdscr, 4, 3, "Track  : ", curses.A_BOLD)
+                        safe_addstr(stdscr, 4, 12, media['title'] or 'Unknown Title', curses.A_BOLD)
 
-                    safe_addstr(stdscr, 6, 3, "Time   : ", curses.A_BOLD)
-                    if media["length"] > 0:
-                        prog_bar = f"[{bar(display_pos, media['length'], b_width)}]"
-                        time_str = f" {fmt_time(display_pos)} / {fmt_time(media['length'])}"
-                        safe_addstr(stdscr, 6, 12, prog_bar)
-                        safe_addstr(stdscr, 6, 12 + len(prog_bar), time_str, curses.color_pair(2))
+                        safe_addstr(stdscr, 5, 3, "Artist : ", curses.A_BOLD)
+                        safe_addstr(stdscr, 5, 12, media['artist'] or 'Unknown Artist', curses.color_pair(1))
+
+                        safe_addstr(stdscr, 6, 3, "Time   : ", curses.A_BOLD)
+                        if media["length"] > 0:
+                            prog_bar = f"[{bar(display_pos, media['length'], b_width)}]"
+                            drag_tag = " (scrubbing)" if drag_mode == 'progress' else ""
+                            time_str = f" {fmt_time(display_pos)} / {fmt_time(media['length'])}{drag_tag}"
+                            safe_addstr(stdscr, 6, 12, prog_bar)
+                            safe_addstr(stdscr, 6, 12 + len(prog_bar), time_str, curses.color_pair(2) if drag_mode != 'progress' else curses.color_pair(5))
+                        else:
+                            safe_addstr(stdscr, 6, 12, f"{fmt_time(display_pos)} (Live stream / unknown length)", curses.A_DIM)
                     else:
-                        safe_addstr(stdscr, 6, 12, f"{fmt_time(display_pos)} (Live stream / unknown length)", curses.A_DIM)
-                else:
-                    safe_addstr(stdscr, 3, 3, "Player : ", curses.A_BOLD)
-                    safe_addstr(stdscr, 3, 12, "Idle", curses.A_DIM)
-                    safe_addstr(stdscr, 4, 3, "Track  : ", curses.A_BOLD)
-                    safe_addstr(stdscr, 4, 12, "No active MPRIS player detected", curses.color_pair(5))
-                    safe_addstr(stdscr, 5, 3, "Artist : ", curses.A_BOLD)
-                    safe_addstr(stdscr, 5, 12, "(Start Spotify, Zen Browser, or MPV)", curses.A_DIM)
-                    safe_addstr(stdscr, 6, 3, "Time   : ", curses.A_BOLD)
-                    safe_addstr(stdscr, 6, 12, "--:-- / --:--", curses.A_DIM)
+                        safe_addstr(stdscr, 3, 3, "Player : ", curses.A_BOLD)
+                        safe_addstr(stdscr, 3, 12, "Idle", curses.A_DIM)
+                        safe_addstr(stdscr, 4, 3, "Track  : ", curses.A_BOLD)
+                        safe_addstr(stdscr, 4, 12, "No active MPRIS player detected", curses.color_pair(5))
+                        safe_addstr(stdscr, 5, 3, "Artist : ", curses.A_BOLD)
+                        safe_addstr(stdscr, 5, 12, "(Start Spotify, Zen Browser, or MPV)", curses.A_DIM)
+                        safe_addstr(stdscr, 6, 3, "Time   : ", curses.A_BOLD)
+                        safe_addstr(stdscr, 6, 12, "--:-- / --:--", curses.A_DIM)
 
-                # Volume Info
-                vol_icon = "🔇 MUTED" if muted else f"🔊 {display_vol}%"
-                vol_color = curses.color_pair(4) if muted else curses.color_pair(2)
-                safe_addstr(stdscr, 7, 3, "Volume : ", curses.A_BOLD)
-                vol_bar = f"[{bar(display_vol, 100, b_width)}]"
-                safe_addstr(stdscr, 7, 12, vol_bar)
-                safe_addstr(stdscr, 7, 12 + len(vol_bar), f" {vol_icon}", vol_color | curses.A_BOLD)
+                    # Volume Info
+                    vol_icon = "🔇 MUTED" if muted else f"🔊 {display_vol}%"
+                    vol_color = curses.color_pair(4) if muted else curses.color_pair(2)
+                    safe_addstr(stdscr, 7, 3, "Volume : ", curses.A_BOLD)
+                    vol_bar = f"[{bar(display_vol, 100, b_width)}]"
+                    safe_addstr(stdscr, 7, 12, vol_bar)
+                    safe_addstr(stdscr, 7, 12 + len(vol_bar), f" {vol_icon}", vol_color | curses.A_BOLD)
 
-                # Controls Footer
-                ctrl_y1 = max(9, h - 3)
-                ctrl_y2 = ctrl_y1 + 1
-                safe_addstr(stdscr, ctrl_y1 - 1, 2, "─" * max(0, w - 4), curses.color_pair(1))
-                ctrls1 = "[Space] Play/Pause   [u/i] Prev/Next Track   [h/l] Seek ±10s   [0-9] %"
-                ctrls2 = "[j/k] Vol ±5%        [s] Seek to...          [m] Mute          [q] Quit"
-                safe_addstr(stdscr, ctrl_y1, max(0, (w - len(ctrls1)) // 2), ctrls1, curses.A_DIM)
-                safe_addstr(stdscr, ctrl_y2, max(0, (w - len(ctrls2)) // 2), ctrls2, curses.A_DIM)
+                    # Controls Footer
+                    ctrl_y1 = max(9, h - 3)
+                    ctrl_y2 = ctrl_y1 + 1
+                    safe_addstr(stdscr, ctrl_y1 - 1, 2, "─" * max(0, w - 4), curses.color_pair(1))
+                    ctrls1 = "[Space] Play/Pause   [u/i] Prev/Next Track   [h/l] Seek ±10s   [0-9] %"
+                    ctrls2 = "[j/k] Vol ±5%        [Mouse] Click/Drag      [m] Mute          [q] Quit"
+                    safe_addstr(stdscr, ctrl_y1, max(0, (w - len(ctrls1)) // 2), ctrls1, curses.A_DIM)
+                    safe_addstr(stdscr, ctrl_y2, max(0, (w - len(ctrls2)) // 2), ctrls2, curses.A_DIM)
 
-                stdscr.refresh()
+                    stdscr.refresh()
 
-                try:
-                    key = stdscr.getch()
-                except KeyboardInterrupt:
-                    break
-
-                if key in (ord('q'), ord('Q'), 27):
-                    break
-                elif key == ord(' '):
-                    fire_cmd(["${pkgs.playerctl}/bin/playerctl", "play-pause"])
-                elif key in (ord('i'), ord('I'), ord('n'), ord('N')):
-                    fire_cmd(["${pkgs.playerctl}/bin/playerctl", "next"])
-                elif key in (ord('u'), ord('U'), ord('p'), ord('P')):
-                    fire_cmd(["${pkgs.playerctl}/bin/playerctl", "previous"])
-                elif key in (ord('l'), curses.KEY_RIGHT, ord('.')):
-                    # Seek forward 10s
-                    if media and media["length"] > 0:
-                        seek_target = min(media["length"], display_pos + 10)
-                        seek_time = time.time()
-                    fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "10+"])
-                elif key in (ord('L'), ord('>'), ord(']')):
-                    # Seek forward 30s
-                    if media and media["length"] > 0:
-                        seek_target = min(media["length"], display_pos + 30)
-                        seek_time = time.time()
-                    fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "30+"])
-                elif key in (ord('h'), curses.KEY_LEFT, ord(',')):
-                    # Seek backward 10s
-                    if media and media["length"] > 0:
-                        seek_target = max(0, display_pos - 10)
-                        seek_time = time.time()
-                    fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "10-"])
-                elif key in (ord('H'), ord('<'), ord('[')):
-                    # Seek backward 30s
-                    if media and media["length"] > 0:
-                        seek_target = max(0, display_pos - 30)
-                        seek_time = time.time()
-                    fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "30-"])
-                elif ord('0') <= key <= ord('9'):
-                    # Jump directly to track percentage (0% to 90%)
-                    if media and media["length"] > 0:
-                        pct = (key - ord('0')) * 0.10
-                        target = int(media["length"] * pct)
-                        seek_target = target
-                        seek_time = time.time()
-                        fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", str(target)])
-                elif key in (ord('s'), ord('S'), ord(':'), ord('/')):
-                    tgt = prompt_seek(stdscr, h, w, media)
-                    if tgt is not None:
-                        seek_target = tgt
-                        seek_time = time.time()
-                elif key in (ord('k'), ord('K'), curses.KEY_UP):
-                    vol_lock = (min(100, display_vol + 5), time.time())
-                    fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", "5%+"])
-                elif key in (ord('j'), ord('J'), curses.KEY_DOWN):
-                    vol_lock = (max(0, display_vol - 5), time.time())
-                    fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%-"])
-                elif key in (ord('m'), ord('M')):
-                    fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"])
-                elif key == curses.KEY_MOUSE:
                     try:
-                        _, mx, my, _, bstate = curses.getmouse()
-                        if bstate & (curses.BUTTON1_CLICKED | curses.BUTTON1_PRESSED | curses.BUTTON1_RELEASED):
+                        key = stdscr.getch()
+                    except KeyboardInterrupt:
+                        break
+
+                    if key in (ord('q'), ord('Q'), 27):
+                        break
+                    elif key == ord(' '):
+                        fire_cmd(["${pkgs.playerctl}/bin/playerctl", "play-pause"])
+                    elif key in (ord('i'), ord('I'), ord('n'), ord('N')):
+                        fire_cmd(["${pkgs.playerctl}/bin/playerctl", "next"])
+                    elif key in (ord('u'), ord('U'), ord('p'), ord('P')):
+                        fire_cmd(["${pkgs.playerctl}/bin/playerctl", "previous"])
+                    elif key in (ord('l'), curses.KEY_RIGHT, ord('.')):
+                        # Seek forward 10s
+                        if media and media["length"] > 0:
+                            seek_target = min(media["length"], display_pos + 10)
+                            seek_time = time.time()
+                        fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "10+"])
+                    elif key in (ord('L'), ord('>'), ord(']')):
+                        # Seek forward 30s
+                        if media and media["length"] > 0:
+                            seek_target = min(media["length"], display_pos + 30)
+                            seek_time = time.time()
+                        fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "30+"])
+                    elif key in (ord('h'), curses.KEY_LEFT, ord(',')):
+                        # Seek backward 10s
+                        if media and media["length"] > 0:
+                            seek_target = max(0, display_pos - 10)
+                            seek_time = time.time()
+                        fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "10-"])
+                    elif key in (ord('H'), ord('<'), ord('[')):
+                        # Seek backward 30s
+                        if media and media["length"] > 0:
+                            seek_target = max(0, display_pos - 30)
+                            seek_time = time.time()
+                        fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "30-"])
+                    elif ord('0') <= key <= ord('9'):
+                        # Jump directly to track percentage (0% to 90%)
+                        if media and media["length"] > 0:
+                            pct = (key - ord('0')) * 0.10
+                            target = int(media["length"] * pct)
+                            seek_target = target
+                            seek_time = time.time()
+                            fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", str(target)])
+                    elif key in (ord('s'), ord('S'), ord(':'), ord('/')):
+                        tgt = prompt_seek(stdscr, h, w, media)
+                        if tgt is not None:
+                            seek_target = tgt
+                            seek_time = time.time()
+                    elif key in (ord('k'), ord('K'), curses.KEY_UP):
+                        vol_lock = (min(100, display_vol + 5), time.time())
+                        fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", "5%+"])
+                    elif key in (ord('j'), ord('J'), curses.KEY_DOWN):
+                        vol_lock = (max(0, display_vol - 5), time.time())
+                        fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%-"])
+                    elif key in (ord('m'), ord('M')):
+                        fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"])
+                    elif key == curses.KEY_MOUSE:
+                        try:
+                            _, mx, my, _, bstate = curses.getmouse()
                             now_m = time.time()
-                            if now_m - last_mouse_time >= 0.15:
-                                last_mouse_time = now_m
+
+                            is_press = bool(bstate & (curses.BUTTON1_PRESSED | curses.BUTTON1_CLICKED))
+                            is_release = bool(bstate & (curses.BUTTON1_RELEASED | curses.BUTTON1_CLICKED))
+                            is_motion = bool(bstate & curses.REPORT_MOUSE_POSITION) or (drag_mode is not None and not is_release)
+
+                            # Handle initial press on progress or volume bar
+                            if is_press and drag_mode is None:
+                                if my == 6 and media and media["length"] > 0 and (12 <= mx <= 13 + b_width):
+                                    drag_mode = 'progress'
+                                    drag_val = int(media["length"] * x_to_ratio(mx, b_width))
+                                    last_drag_time = now_m
+                                    stdscr.timeout(20)
+                                elif my == 7 and (12 <= mx <= 13 + b_width):
+                                    drag_mode = 'volume'
+                                    drag_val = int(x_to_ratio(mx, b_width) * 100)
+                                    last_drag_time = now_m
+                                    stdscr.timeout(20)
+
+                            # Handle active dragging (smooth real-time slider follow)
+                            if drag_mode is not None and (is_motion or is_press):
+                                last_drag_time = now_m
+                                if drag_mode == 'progress' and media and media["length"] > 0:
+                                    drag_val = int(media["length"] * x_to_ratio(mx, b_width))
+                                elif drag_mode == 'volume':
+                                    drag_val = int(x_to_ratio(mx, b_width) * 100)
+                                    # Live volume update throttled to 80ms
+                                    if now_m - last_vol_cmd > 0.08:
+                                        last_vol_cmd = now_m
+                                        fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", f"{drag_val}%"])
+
+                            # Handle release / click commit
+                            if is_release and drag_mode is not None:
+                                last_drag_time = now_m
+                                if drag_mode == 'progress' and media and media["length"] > 0:
+                                    drag_val = int(media["length"] * x_to_ratio(mx, b_width))
+                                    seek_target = drag_val
+                                    seek_time = now_m
+                                    fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", str(drag_val)])
+                                elif drag_mode == 'volume':
+                                    drag_val = int(x_to_ratio(mx, b_width) * 100)
+                                    vol_lock = (drag_val, now_m)
+                                    fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", f"{drag_val}%"])
+                                drag_mode = None
+                                stdscr.timeout(500)
                                 curses.flushinp()
-
-                                # Mouse click on progress bar (line 6)
-                                if my == 6 and media and media["length"] > 0:
-                                    if 12 <= mx <= 13 + b_width:
-                                        if mx <= 13:
-                                            ratio = 0.0
-                                        elif mx >= 12 + b_width:
-                                            ratio = 1.0
-                                        else:
-                                            ratio = (mx - 13) / max(1, b_width - 1)
-                                        target = int(media["length"] * ratio)
-                                        seek_target = target
-                                        seek_time = now_m
-                                        fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", str(target)])
-
-                                # Mouse click on volume bar (line 7)
-                                elif my == 7:
-                                    if 12 <= mx <= 13 + b_width:
-                                        if mx <= 13:
-                                            ratio = 0.0
-                                        elif mx >= 12 + b_width:
-                                            ratio = 1.0
-                                        else:
-                                            ratio = (mx - 13) / max(1, b_width - 1)
-                                        target_vol = int(ratio * 100)
-                                        vol_lock = (target_vol, now_m)
-                                        target_pct = f"{target_vol}%"
-                                        fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", target_pct])
-                    except Exception:
-                        pass
+                        except Exception:
+                            pass
+            finally:
+                sys.stdout.write("\033[?1002l")
+                sys.stdout.flush()
 
         if __name__ == "__main__":
             try:
