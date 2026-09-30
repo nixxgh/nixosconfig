@@ -77,6 +77,12 @@
                 return f"{h:02d}:{m:02d}:{s:02d}"
             return f"{m:02d}:{s:02d}"
 
+        def draw_bar(val, max_val, width=20):
+            if max_val <= 0 or width <= 0:
+                return "░" * max(1, width)
+            fill = int(min(max(val / max_val, 0), 1) * width)
+            return "█" * fill + "░" * (width - fill)
+
         def safe_addstr(stdscr, y, x, s, attr=0):
             h, w = stdscr.getmaxyx()
             if 0 <= y < h and 0 <= x < w:
@@ -200,7 +206,7 @@
                 self.selected = None
                 self.action = None
                 self.server_info = pm.PULSE.get_server_info() if pm and pm.PULSE else None
-                self.visible_map = []  # list of (row_idx, stream_idx, bar_item, bartype)
+                self.row_to_stream = {}
 
             def update_dimensions(self, screen, start_y, start_x, h, w, compact=False):
                 self.screen = screen
@@ -212,7 +218,17 @@
                 self.lines = max(1, h - 2)
                 self.cols = max(10, w - 2)
 
-            def display_line(self, index, line, mod=curses.A_NORMAL, win=None):
+            def get_unique_streams(self):
+                seen = []
+                res = []
+                for idx, item in enumerate(self.data):
+                    bar_item = item[0]
+                    if bar_item and getattr(bar_item, 'name', None) and bar_item not in seen:
+                        seen.append(bar_item)
+                        res.append((idx, bar_item))
+                return res
+
+            def display_line(self, index, line, mod=curses.A_NORMAL):
                 y = self.start_y + index
                 sh, sw = self.screen.getmaxyx()
                 if not (0 <= y < sh):
@@ -232,92 +248,124 @@
                     shift += len(head)
 
             def display(self):
-                self.visible_map = []
+                self.row_to_stream = {}
                 self.display_line(0, self.menu)
+                unique = self.get_unique_streams()
+
+                focused_bar = None
+                if 0 <= self.focus_line_num < len(self.data):
+                    focused_bar = self.data[self.focus_line_num][0]
+                elif unique:
+                    self.focus_line_num = unique[0][0]
+                    focused_bar = unique[0][1]
+
                 row_idx = 1
-                for index, line in enumerate(self.data):
-                    bar_item, bartype = line[0], line[1]
-                    if not bar_item or bartype is pm.Bar.NONE:
-                        continue
+                if self.compact:
+                    for stream_idx, bar_item in unique:
+                        if row_idx > self.lines:
+                            break
+                        self.row_to_stream[row_idx] = (stream_idx, bar_item)
+                        is_focused = (bar_item is focused_bar)
 
-                    # In compact mode, combine locked channels into a single row
-                    if self.compact and bar_item.locked and bartype > 0:
-                        continue
-
-                    if row_idx > self.lines:
-                        break
-
-                    self.visible_map.append((row_idx, index, bar_item, bartype))
-
-                    # Check if this stream is the focused stream
-                    is_focused = False
-                    if index == self.focus_line_num:
-                        is_focused = True
-                    elif bar_item is self.data[self.focus_line_num][0]:
-                        is_focused = True
-
-                    tree = ' '
-                    if bartype == pm.Bar.LEFT or (self.compact and bar_item.locked):
+                        tree = ' '
                         if bar_item.owner == -1:
-                            tree = ' '
+                            if self.server_info and bar_item.pa.name in (self.server_info.default_sink_name, self.server_info.default_source_name):
+                                tree = '*'
+                            else:
+                                tree = ' '
                         else:
                             tree = ' └─'
 
-                    if self.compact and bar_item.locked:
-                        brackets = [pm.CFG.style.bar_left_mono, pm.CFG.style.bar_right_mono]
-                    elif bartype == pm.Bar.LEFT:
-                        brackets = [pm.CFG.style.bar_top_left, pm.CFG.style.bar_top_right] if bar_item.channels != 1 else [pm.CFG.style.bar_left_mono, pm.CFG.style.bar_right_mono]
-                    elif bartype == bar_item.channels - 1:
-                        brackets = [pm.CFG.style.bar_bottom_left, pm.CFG.style.bar_bottom_right]
-                    else:
-                        brackets = ['├', '┤']
+                        ptr = "▸ " if is_focused else "  "
+                        focus_attr = (curses.color_pair(1) | curses.A_BOLD) if is_focused else curses.A_NORMAL
+                        bracket_attr = (curses.color_pair(1) | curses.A_BOLD) if is_focused else curses.A_DIM
+                        val_attr = (curses.color_pair(2) | curses.A_BOLD) if is_focused else curses.A_NORMAL
 
-                    focus_hl = curses.A_BOLD if is_focused else 0
-                    bracket_hl = curses.A_BOLD if is_focused else 0
-                    arrow = pm.CFG.style.arrow_focused if is_focused else pm.CFG.style.arrow
-                    gradient = self.gradient if (bar_item.muted or self.color_mode == 2) else self.gray_gradient
-
-                    if bar_item.muted:
-                        bracket_hl = bracket_hl | self.red
-                        focus_hl = focus_hl | self.muted_color
-
-                    off = 6 * (self.cols // (43 if self.cols <= 60 else 25)) - len(tree)
-                    cols = max(8, self.cols - 31 - off - len(tree))
-                    vol = list(pm.CFG.style.bar_off * (cols - (cols % 3 != 0)))
-                    cur_vol = bar_item.volume[bartype if not (self.compact and bar_item.locked) else 0]
-                    n = int(len(vol) * min(cur_vol, bar_item.maxsize) / bar_item.maxsize)
-                    if bar_item.muted:
-                        vol[:n] = pm.CFG.style.bar_on_muted * n
-                    else:
-                        vol[:n] = pm.CFG.style.bar_on * n
-                    vol = "".join(vol)
-
-                    if bartype == pm.Bar.LEFT or (self.compact and bar_item.locked):
-                        if self.server_info and bar_item.pa.name in (self.server_info.default_sink_name, self.server_info.default_source_name):
-                            tree = pm.CFG.style.default_stream
+                        off = 6 * (self.cols // (43 if self.cols <= 60 else 25)) - len(tree)
+                        max_name_len = max(8, 20 + off)
                         name = f"{bar_item.name}{bar_item.media_name}"
-                        max_name_len = 20 + off
                         if len(name) > max_name_len:
                             name = name[:max_name_len].strip() + '~'
-                        line = f"{name:<{max_name_len + 2}}|{focus_hl}\n {cur_vol:<3}|{focus_hl}\n "
-                    elif bartype == pm.Bar.RIGHT:
-                        sp1 = " " * (21 + off)
-                        sp2 = " " * 3
-                        line = f"{sp1}|{self.red if bar_item.locked else curses.A_DIM}\n {sp2}|{self.red if bar_item.muted else curses.A_DIM}\n {cur_vol:<3}|{focus_hl}\n "
-                    else:
-                        sp3 = " " * (23 + off)
-                        line = f"{sp3}{cur_vol:<3}|{focus_hl}\n "
 
-                    volbar = ""
-                    chunk_sz = max(1, len(vol) // 3)
-                    for vi, v in enumerate(re.findall(r'.{{{}}}'.format(chunk_sz), vol)):
-                        volbar += f"\n{v}|{gradient[min(vi, len(gradient)-1)] | focus_hl}"
+                        cur_vol = bar_item.volume[0] if bar_item.volume else 0
+                        cols = max(8, self.cols - 31 - off - len(tree))
+                        vol = list(pm.CFG.style.bar_off * (cols - (cols % 3 != 0)))
+                        n = int(len(vol) * min(cur_vol, bar_item.maxsize) / max(1, bar_item.maxsize))
+                        if bar_item.muted:
+                            vol[:n] = pm.CFG.style.bar_on_muted * n
+                        else:
+                            vol[:n] = pm.CFG.style.bar_on * n
+                        vol_str = "".join(vol)
 
-                    line += f"{arrow:>1}|{curses.A_BOLD}\n{brackets[0]}|{bracket_hl}{volbar}\n{brackets[1]}|{bracket_hl}\n{arrow}|{curses.A_BOLD}"
-                    self.display_line(row_idx, tree + "|0\n" + line)
-                    row_idx += 1
+                        gradient = self.gradient if (bar_item.muted or self.color_mode == 2) else self.gray_gradient
+                        volbar = ""
+                        chunk_sz = max(1, len(vol_str) // 3)
+                        for vi, v in enumerate(re.findall(r'.{{{}}}'.format(chunk_sz), vol_str)):
+                            volbar += f"\n{v}|{gradient[min(vi, len(gradient)-1)] | (curses.A_BOLD if is_focused else 0)}"
 
-                self.display_line(row_idx, self.info)
+                        brackets = [pm.CFG.style.bar_left_mono, pm.CFG.style.bar_right_mono]
+                        line = f"{ptr}|{focus_attr}\n{tree}|0\n{name:<{max_name_len + 2}}|{focus_attr}\n {cur_vol:<3}|{val_attr}\n {brackets[0]}|{bracket_attr}{volbar}\n{brackets[1]}|{bracket_attr}"
+                        self.display_line(row_idx, line)
+                        row_idx += 1
+                else:
+                    top = self.top_line_num
+                    bottom = self.top_line_num + self.lines
+                    for index, line_data in enumerate(self.data[top:bottom]):
+                        bar_item, bartype = line_data[0], line_data[1]
+                        if not bar_item or bartype is pm.Bar.NONE:
+                            continue
+                        self.row_to_stream[row_idx] = (index + top, bar_item)
+                        is_focused = (bar_item is focused_bar)
+                        ptr = "▸ " if is_focused else "  "
+                        focus_attr = (curses.color_pair(1) | curses.A_BOLD) if is_focused else curses.A_NORMAL
+
+                        tree = ' '
+                        if bartype == pm.Bar.LEFT:
+                            tree = '*' if (self.server_info and bar_item.pa.name in (self.server_info.default_sink_name, self.server_info.default_source_name)) else (' ' if bar_item.owner == -1 else ' └─')
+                            brackets = [pm.CFG.style.bar_top_left, pm.CFG.style.bar_top_right] if bar_item.channels != 1 else [pm.CFG.style.bar_left_mono, pm.CFG.style.bar_right_mono]
+                        elif bartype == bar_item.channels - 1:
+                            brackets = [pm.CFG.style.bar_bottom_left, pm.CFG.style.bar_bottom_right]
+                        else:
+                            brackets = ['├', '┤']
+
+                        off = 6 * (self.cols // (43 if self.cols <= 60 else 25)) - len(tree)
+                        max_name_len = max(8, 20 + off)
+                        name = f"{bar_item.name}{bar_item.media_name}"
+                        if len(name) > max_name_len:
+                            name = name[:max_name_len].strip() + '~'
+
+                        cur_vol = bar_item.volume[bartype] if bartype < len(bar_item.volume) else 0
+                        cols = max(8, self.cols - 31 - off - len(tree))
+                        vol = list(pm.CFG.style.bar_off * (cols - (cols % 3 != 0)))
+                        n = int(len(vol) * min(cur_vol, bar_item.maxsize) / max(1, bar_item.maxsize))
+                        if bar_item.muted:
+                            vol[:n] = pm.CFG.style.bar_on_muted * n
+                        else:
+                            vol[:n] = pm.CFG.style.bar_on * n
+                        vol_str = "".join(vol)
+
+                        gradient = self.gradient if (bar_item.muted or self.color_mode == 2) else self.gray_gradient
+                        volbar = ""
+                        chunk_sz = max(1, len(vol_str) // 3)
+                        for vi, v in enumerate(re.findall(r'.{{{}}}'.format(chunk_sz), vol_str)):
+                            volbar += f"\n{v}|{gradient[min(vi, len(gradient)-1)] | (curses.A_BOLD if is_focused else 0)}"
+
+                        if bartype == pm.Bar.LEFT:
+                            row_txt = f"{ptr}|{focus_attr}\n{tree}|0\n{name:<{max_name_len + 2}}|{focus_attr}\n {cur_vol:<3}|{focus_attr}\n {brackets[0]}|{focus_attr}{volbar}\n{brackets[1]}|{focus_attr}"
+                        else:
+                            sp1 = " " * (max_name_len + 5 + len(tree))
+                            row_txt = f"  |0\n{sp1}|0\n{cur_vol:<3}|{focus_attr}\n {brackets[0]}|{focus_attr}{volbar}\n{brackets[1]}|{focus_attr}"
+                        self.display_line(row_idx, row_txt)
+                        row_idx += 1
+
+                # Info footer
+                if focused_bar:
+                    l_str = "L" if focused_bar.locked else "U"
+                    m_str = "M" if focused_bar.muted else " "
+                    m_color = self.red if focused_bar.muted else curses.A_DIM
+                    side_str = "All" if focused_bar.locked else "Stereo"
+                    info_line = f" {l_str}|{curses.A_BOLD}\n {m_str}|{m_color}\n  {focused_bar.name}: {side_str}|{curses.A_DIM}"
+                    self.display_line(row_idx, info_line)
 
         def main(stdscr):
             curses.curs_set(0)
@@ -609,7 +657,6 @@
                     if eps:
                         try:
                             eps.update_menu()
-                            eps.update_info()
                             eps.display()
                         except Exception:
                             pass
@@ -671,59 +718,51 @@
                         eps.change_mode(2)
                         last_pm_poll = 0
                     elif key in (ord('k'), curses.KEY_UP) and eps and eps.data:
-                        if eps.compact and eps.visible_map:
-                            cur_idx = next((i for i, v in enumerate(eps.visible_map) if v[1] == eps.focus_line_num), 0)
-                            prev_entry = eps.visible_map[max(0, cur_idx - 1)]
-                            eps.focus_line_num = prev_entry[1]
-                        else:
-                            focus = eps.top_line_num + eps.focus_line_num
-                            stream_bar = eps.data[focus][0] if focus < len(eps.data) else None
-                            if stream_bar and stream_bar.locked:
-                                n = 1 if eps.data[focus][1] == 0 else eps.data[focus][1] + 1
-                                for _ in range(n): eps.scroll(eps.UP)
-                            else:
-                                eps.scroll(eps.UP)
-                            if not eps.data[eps.top_line_num + eps.focus_line_num][0]:
-                                eps.scroll(eps.UP)
+                        streams = eps.get_unique_streams()
+                        if streams:
+                            cur_stream = eps.data[eps.focus_line_num][0] if 0 <= eps.focus_line_num < len(eps.data) else None
+                            cur_i = 0
+                            for i, s in enumerate(streams):
+                                if s[1] is cur_stream or s[0] == eps.focus_line_num:
+                                    cur_i = i
+                                    break
+                            prev_i = (cur_i - 1) % len(streams)
+                            eps.focus_line_num = streams[prev_i][0]
                     elif key in (ord('j'), curses.KEY_DOWN) and eps and eps.data:
-                        if eps.compact and eps.visible_map:
-                            cur_idx = next((i for i, v in enumerate(eps.visible_map) if v[1] == eps.focus_line_num), 0)
-                            next_entry = eps.visible_map[min(len(eps.visible_map) - 1, cur_idx + 1)]
-                            eps.focus_line_num = next_entry[1]
-                        else:
-                            focus = eps.top_line_num + eps.focus_line_num
-                            stream_bar = eps.data[focus][0] if focus < len(eps.data) else None
-                            if stream_bar and stream_bar.locked:
-                                n = 1 if eps.data[focus][1] == eps.data[focus][3] - 1 else ((eps.data[focus][3] - 1) - eps.data[focus][1]) + 1
-                                for _ in range(n): eps.scroll(eps.DOWN)
-                            else:
-                                eps.scroll(eps.DOWN)
-                            if not eps.data[eps.top_line_num + eps.focus_line_num][0]:
-                                eps.scroll(eps.DOWN)
+                        streams = eps.get_unique_streams()
+                        if streams:
+                            cur_stream = eps.data[eps.focus_line_num][0] if 0 <= eps.focus_line_num < len(eps.data) else None
+                            cur_i = 0
+                            for i, s in enumerate(streams):
+                                if s[1] is cur_stream or s[0] == eps.focus_line_num:
+                                    cur_i = i
+                                    break
+                            next_i = (cur_i + 1) % len(streams)
+                            eps.focus_line_num = streams[next_i][0]
                     elif key in (ord('h'), curses.KEY_LEFT, ord('-')) and eps and eps.data:
-                        focus = eps.top_line_num + eps.focus_line_num
-                        if focus < len(eps.data):
+                        focus = eps.focus_line_num
+                        if 0 <= focus < len(eps.data):
                             stream_bar, side = eps.data[focus][0], eps.data[focus][1]
                             if stream_bar:
                                 stream_bar.move(-2, side)
                                 last_pm_poll = 0
                     elif key in (ord('l'), curses.KEY_RIGHT, ord('+'), ord('=')) and eps and eps.data:
-                        focus = eps.top_line_num + eps.focus_line_num
-                        if focus < len(eps.data):
+                        focus = eps.focus_line_num
+                        if 0 <= focus < len(eps.data):
                             stream_bar, side = eps.data[focus][0], eps.data[focus][1]
                             if stream_bar:
                                 stream_bar.move(2, side)
                                 last_pm_poll = 0
                     elif key in (ord('m'), ord('M')) and eps and eps.data:
-                        focus = eps.top_line_num + eps.focus_line_num
-                        if focus < len(eps.data):
+                        focus = eps.focus_line_num
+                        if 0 <= focus < len(eps.data):
                             stream_bar = eps.data[focus][0]
                             if stream_bar:
                                 stream_bar.mute_toggle()
                                 last_pm_poll = 0
                     elif ord('0') <= key <= ord('9') and eps and eps.data:
-                        focus = eps.top_line_num + eps.focus_line_num
-                        if focus < len(eps.data):
+                        focus = eps.focus_line_num
+                        if 0 <= focus < len(eps.data):
                             stream_bar, side = eps.data[focus][0], eps.data[focus][1]
                             if stream_bar:
                                 pct = 100 if key == ord('0') else (key - ord('0')) * 10
@@ -802,30 +841,26 @@
                                     elif rx in range(f2, f3):
                                         eps.change_mode(2)
                                     last_pm_poll = 0
-                                elif ry > 0:
-                                    # Lookup row in visible_map
-                                    target_entry = next((v for v in eps.visible_map if v[0] == ry), None)
-                                    if target_entry:
-                                        _, stream_data_idx, bar_item, bartype = target_entry
-                                        side_to_set = bartype if not (eps.compact and bar_item.locked) else 0
-                                        if is_press or (is_motion and (bstate & curses.BUTTON1_PRESSED)):
-                                            eps.focus_line_num = stream_data_idx
-                                            off = 6 * (eps.cols // (43 if eps.cols <= 60 else 25))
-                                            bar_start_x = 22 + off + 6
-                                            bar_len = max(5, eps.cols - 31 - off)
-                                            if rx >= bar_start_x and bar_item:
-                                                pct = int(min(1.0, max(0.0, (rx - bar_start_x) / bar_len)) * 100)
-                                                bar_item.set(pct, side_to_set)
-                                                last_pm_poll = 0
-                                        # Mouse wheel volume adjustments
-                                        if hasattr(curses, 'BUTTON4_PRESSED') and (bstate & curses.BUTTON4_PRESSED):
-                                            if bar_item:
-                                                bar_item.move(3, side_to_set)
-                                                last_pm_poll = 0
-                                        elif hasattr(curses, 'BUTTON5_PRESSED') and (bstate & curses.BUTTON5_PRESSED):
-                                            if bar_item:
-                                                bar_item.move(-3, side_to_set)
-                                                last_pm_poll = 0
+                                elif ry in eps.row_to_stream:
+                                    stream_idx, bar_item = eps.row_to_stream[ry]
+                                    if is_press or (is_motion and (bstate & curses.BUTTON1_PRESSED)):
+                                        eps.focus_line_num = stream_idx
+                                        off = 6 * (eps.cols // (43 if eps.cols <= 60 else 25))
+                                        bar_start_x = 22 + off + 6
+                                        bar_len = max(5, eps.cols - 31 - off)
+                                        if rx >= bar_start_x and bar_item:
+                                            pct = int(min(1.0, max(0.0, (rx - bar_start_x) / bar_len)) * 100)
+                                            bar_item.set(pct, 0)
+                                            last_pm_poll = 0
+                                    # Mouse wheel volume adjustments
+                                    if hasattr(curses, 'BUTTON4_PRESSED') and (bstate & curses.BUTTON4_PRESSED):
+                                        if bar_item:
+                                            bar_item.move(3, 0)
+                                            last_pm_poll = 0
+                                    elif hasattr(curses, 'BUTTON5_PRESSED') and (bstate & curses.BUTTON5_PRESSED):
+                                        if bar_item:
+                                            bar_item.move(-3, 0)
+                                            last_pm_poll = 0
                         except Exception:
                             pass
             finally:
