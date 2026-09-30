@@ -220,8 +220,8 @@
                 ctrl_y1 = max(9, h - 3)
                 ctrl_y2 = ctrl_y1 + 1
                 safe_addstr(stdscr, ctrl_y1 - 1, 2, "─" * max(0, w - 4), curses.color_pair(1))
-                ctrls1 = "[Space] Play/Pause   [n/p] Next/Prev   [h/l] Seek ±5s   [0-9] %"
-                ctrls2 = "[j/k] Vol ±5%        [s] Seek to...    [m] Mute         [q] Quit"
+                ctrls1 = "[Space] Play/Pause   [u/i] Prev/Next Track   [h/l] Seek ±10s   [0-9] %"
+                ctrls2 = "[j/k] Vol ±5%        [s] Seek to...          [m] Mute          [q] Quit"
                 safe_addstr(stdscr, ctrl_y1, max(0, (w - len(ctrls1)) // 2), ctrls1, curses.A_DIM)
                 safe_addstr(stdscr, ctrl_y2, max(0, (w - len(ctrls2)) // 2), ctrls2, curses.A_DIM)
 
@@ -232,22 +232,22 @@
                     break
                 elif key == ord(' '):
                     subprocess.run(["${pkgs.playerctl}/bin/playerctl", "play-pause"], stderr=subprocess.DEVNULL)
-                elif key in (ord('n'), ord('N')):
+                elif key in (ord('i'), ord('I'), ord('n'), ord('N')):
                     subprocess.run(["${pkgs.playerctl}/bin/playerctl", "next"], stderr=subprocess.DEVNULL)
-                elif key in (ord('p'), ord('P')):
+                elif key in (ord('u'), ord('U'), ord('p'), ord('P')):
                     subprocess.run(["${pkgs.playerctl}/bin/playerctl", "previous"], stderr=subprocess.DEVNULL)
                 elif key in (ord('l'), curses.KEY_RIGHT, ord('.')):
-                    # Seek forward 5s
-                    subprocess.run(["${pkgs.playerctl}/bin/playerctl", "position", "5+"], stderr=subprocess.DEVNULL)
+                    # Seek forward 10s
+                    subprocess.run(["${pkgs.playerctl}/bin/playerctl", "position", "10+"], stderr=subprocess.DEVNULL)
                 elif key in (ord('L'), ord('>'), ord(']')):
-                    # Seek forward 15s
-                    subprocess.run(["${pkgs.playerctl}/bin/playerctl", "position", "15+"], stderr=subprocess.DEVNULL)
+                    # Seek forward 30s
+                    subprocess.run(["${pkgs.playerctl}/bin/playerctl", "position", "30+"], stderr=subprocess.DEVNULL)
                 elif key in (ord('h'), curses.KEY_LEFT, ord(',')):
-                    # Seek backward 5s
-                    subprocess.run(["${pkgs.playerctl}/bin/playerctl", "position", "5-"], stderr=subprocess.DEVNULL)
+                    # Seek backward 10s
+                    subprocess.run(["${pkgs.playerctl}/bin/playerctl", "position", "10-"], stderr=subprocess.DEVNULL)
                 elif key in (ord('H'), ord('<'), ord('[')):
-                    # Seek backward 15s
-                    subprocess.run(["${pkgs.playerctl}/bin/playerctl", "position", "15-"], stderr=subprocess.DEVNULL)
+                    # Seek backward 30s
+                    subprocess.run(["${pkgs.playerctl}/bin/playerctl", "position", "30-"], stderr=subprocess.DEVNULL)
                 elif ord('0') <= key <= ord('9'):
                     # Jump directly to track percentage (0% to 90%)
                     if media and media["length"] > 0:
