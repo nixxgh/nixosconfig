@@ -11,9 +11,10 @@
         enable = true;
         settings = {
           logo = {
+            type = "small";
             padding = {
               top = 1;
-              right = 2;
+              right = 3;
             };
           };
           display = {
@@ -45,6 +46,7 @@
             {
               type = "packages";
               key = "Packages";
+              format = "{all} (nix)";
             }
             {
               type = "wm";
@@ -61,6 +63,7 @@
             {
               type = "gpu";
               key = "GPU";
+              format = "{name}";
             }
             {
               type = "memory";
