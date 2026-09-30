@@ -49,8 +49,14 @@
             focus-ring = {
               on = { };
               width = 2;
-              active-color = self.theme.hex.border;
+              active-color = "#fffff0";
               inactive-color = self.theme.hex.borderInactive;
+            };
+            border = {
+              on = { };
+              width = 2;
+              active-color = "#36393f";
+              inactive-color = "#36393f";
             };
           };
 
