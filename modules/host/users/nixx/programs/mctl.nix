@@ -77,12 +77,6 @@
                 return f"{h:02d}:{m:02d}:{s:02d}"
             return f"{m:02d}:{s:02d}"
 
-        def draw_bar(val, max_val, width=20):
-            if max_val <= 0 or width <= 0:
-                return "░" * max(1, width)
-            fill = int(min(max(val / max_val, 0), 1) * width)
-            return "█" * fill + "░" * (width - fill)
-
         def safe_addstr(stdscr, y, x, s, attr=0):
             h, w = stdscr.getmaxyx()
             if 0 <= y < h and 0 <= x < w:
@@ -169,9 +163,12 @@
             pm = None
 
         class EmbeddedPulseScreen(pm.Screen if pm else object):
-            def __init__(self, screen, start_y, start_x, h, w):
+            def __init__(self, screen, start_y, start_x, h, w, compact=False):
                 self.screen = screen
-                self.update_dimensions(screen, start_y, start_x, h, w)
+                self.start_y = start_y
+                self.start_x = start_x
+                self.compact = compact
+                self.update_dimensions(screen, start_y, start_x, h, w, compact)
                 self.index = 0
                 self.top_line_num = 0
                 self.focus_line_num = 0
@@ -203,13 +200,15 @@
                 self.selected = None
                 self.action = None
                 self.server_info = pm.PULSE.get_server_info() if pm and pm.PULSE else None
+                self.visible_map = []  # list of (row_idx, stream_idx, bar_item, bartype)
 
-            def update_dimensions(self, screen, start_y, start_x, h, w):
+            def update_dimensions(self, screen, start_y, start_x, h, w, compact=False):
                 self.screen = screen
                 self.start_y = start_y
                 self.start_x = start_x
                 self.h = h
                 self.w = w
+                self.compact = compact
                 self.lines = max(1, h - 2)
                 self.cols = max(10, w - 2)
 
@@ -233,94 +232,92 @@
                     shift += len(head)
 
             def display(self):
-                top = self.top_line_num
-                bottom = self.top_line_num + self.lines
+                self.visible_map = []
                 self.display_line(0, self.menu)
-                for index, line in enumerate(self.data[top:bottom]):
+                row_idx = 1
+                for index, line in enumerate(self.data):
                     bar_item, bartype = line[0], line[1]
-                    if not bar_item:
-                        continue
-                    elif bartype is pm.Bar.NONE:
+                    if not bar_item or bartype is pm.Bar.NONE:
                         continue
 
-                    same = []
-                    for i, v in enumerate(self.data[top:bottom]):
-                        if v[0] is self.data[self.top_line_num + self.focus_line_num][0]:
-                            same.append(v[0])
+                    # In compact mode, combine locked channels into a single row
+                    if self.compact and bar_item.locked and bartype > 0:
+                        continue
+
+                    if row_idx > self.lines:
+                        break
+
+                    self.visible_map.append((row_idx, index, bar_item, bartype))
+
+                    # Check if this stream is the focused stream
+                    is_focused = False
+                    if index == self.focus_line_num:
+                        is_focused = True
+                    elif bar_item is self.data[self.focus_line_num][0]:
+                        is_focused = True
 
                     tree = ' '
-                    if bar_item.owner == -1 and bar_item.owned > bar_item.channels:
-                        tree = ' │'
-                    if bar_item.owner != -1:
-                        tree = ' │'
-                    if bartype == pm.Bar.LEFT:
+                    if bartype == pm.Bar.LEFT or (self.compact and bar_item.locked):
                         if bar_item.owner == -1:
                             tree = ' '
-                        if bar_item.owner != -1:
-                            tree = ' ├─'
-                            if bar_item.stream_index == bar_item.owned:
-                                tree = ' └─'
-                        if bar_item.channels != 1:
-                            brackets = [pm.CFG.style.bar_top_left, pm.CFG.style.bar_top_right]
                         else:
-                            brackets = [pm.CFG.style.bar_left_mono, pm.CFG.style.bar_right_mono]
+                            tree = ' └─'
+
+                    if self.compact and bar_item.locked:
+                        brackets = [pm.CFG.style.bar_left_mono, pm.CFG.style.bar_right_mono]
+                    elif bartype == pm.Bar.LEFT:
+                        brackets = [pm.CFG.style.bar_top_left, pm.CFG.style.bar_top_right] if bar_item.channels != 1 else [pm.CFG.style.bar_left_mono, pm.CFG.style.bar_right_mono]
                     elif bartype == bar_item.channels - 1:
-                        if bar_item.stream_index == bar_item.owned:
-                            tree = ' '
                         brackets = [pm.CFG.style.bar_bottom_left, pm.CFG.style.bar_bottom_right]
                     else:
-                        if bar_item.stream_index == bar_item.owned:
-                            tree = ' '
                         brackets = ['├', '┤']
 
-                    focus_hl, bracket_hl, arrow, gradient = 0, 0, pm.CFG.style.arrow, self.gradient
-                    if index == self.focus_line_num:
-                        focus_hl = bracket_hl = curses.A_BOLD
-                        arrow = pm.CFG.style.arrow_focused
-                    elif bar_item in same:
-                        focus_hl = curses.A_BOLD
-                        if bar_item.locked:
-                            bracket_hl = curses.A_BOLD
-                            arrow = pm.CFG.style.arrow_locked
-                    elif not bar_item.muted and self.color_mode != 2:
-                        gradient = self.gray_gradient
+                    focus_hl = curses.A_BOLD if is_focused else 0
+                    bracket_hl = curses.A_BOLD if is_focused else 0
+                    arrow = pm.CFG.style.arrow_focused if is_focused else pm.CFG.style.arrow
+                    gradient = self.gradient if (bar_item.muted or self.color_mode == 2) else self.gray_gradient
 
                     if bar_item.muted:
                         bracket_hl = bracket_hl | self.red
                         focus_hl = focus_hl | self.muted_color
 
                     off = 6 * (self.cols // (43 if self.cols <= 60 else 25)) - len(tree)
-                    cols = self.cols - 31 - off - len(tree)
+                    cols = max(8, self.cols - 31 - off - len(tree))
                     vol = list(pm.CFG.style.bar_off * (cols - (cols % 3 != 0)))
-                    n = int(len(vol) * bar_item.volume[bartype] / bar_item.maxsize)
+                    cur_vol = bar_item.volume[bartype if not (self.compact and bar_item.locked) else 0]
+                    n = int(len(vol) * min(cur_vol, bar_item.maxsize) / bar_item.maxsize)
                     if bar_item.muted:
                         vol[:n] = pm.CFG.style.bar_on_muted * n
                     else:
                         vol[:n] = pm.CFG.style.bar_on * n
                     vol = "".join(vol)
-                    if bartype is pm.Bar.LEFT:
+
+                    if bartype == pm.Bar.LEFT or (self.compact and bar_item.locked):
                         if self.server_info and bar_item.pa.name in (self.server_info.default_sink_name, self.server_info.default_source_name):
                             tree = pm.CFG.style.default_stream
                         name = f"{bar_item.name}{bar_item.media_name}"
-                        if len(name) > 20 + off:
-                            name = name[:20 + off].strip() + '~'
-                        line = f"{name:<{22 + off}}|{focus_hl}\n {bar_item.volume[0]:<3}|{focus_hl}\n "
-                    elif bartype is pm.Bar.RIGHT:
+                        max_name_len = 20 + off
+                        if len(name) > max_name_len:
+                            name = name[:max_name_len].strip() + '~'
+                        line = f"{name:<{max_name_len + 2}}|{focus_hl}\n {cur_vol:<3}|{focus_hl}\n "
+                    elif bartype == pm.Bar.RIGHT:
                         sp1 = " " * (21 + off)
                         sp2 = " " * 3
-                        line = f"{sp1}|{self.red if bar_item.locked else curses.A_DIM}\n {sp2}|{self.red if bar_item.muted else curses.A_DIM}\n {bar_item.volume[bartype]:<3}|{focus_hl}\n "
+                        line = f"{sp1}|{self.red if bar_item.locked else curses.A_DIM}\n {sp2}|{self.red if bar_item.muted else curses.A_DIM}\n {cur_vol:<3}|{focus_hl}\n "
                     else:
                         sp3 = " " * (23 + off)
-                        line = f"{sp3}{bar_item.volume[bartype]:<3}|{focus_hl}\n "
+                        line = f"{sp3}{cur_vol:<3}|{focus_hl}\n "
 
                     volbar = ""
                     chunk_sz = max(1, len(vol) // 3)
-                    for i, v in enumerate(re.findall(r'.{{{}}}'.format(chunk_sz), vol)):
-                        volbar += f"\n{v}|{gradient[min(i, len(gradient)-1)] | focus_hl}"
+                    for vi, v in enumerate(re.findall(r'.{{{}}}'.format(chunk_sz), vol)):
+                        volbar += f"\n{v}|{gradient[min(vi, len(gradient)-1)] | focus_hl}"
 
                     line += f"{arrow:>1}|{curses.A_BOLD}\n{brackets[0]}|{bracket_hl}{volbar}\n{brackets[1]}|{bracket_hl}\n{arrow}|{curses.A_BOLD}"
-                    self.display_line(index + 1, tree + "|0\n" + line)
-                self.display_line(self.lines + 1, self.info)
+                    self.display_line(row_idx, tree + "|0\n" + line)
+                    row_idx += 1
+
+                self.display_line(row_idx, self.info)
 
         def main(stdscr):
             curses.curs_set(0)
@@ -424,35 +421,44 @@
                 while True:
                     now = time.time()
                     h, w = stdscr.getmaxyx()
-                    b_width = max(10, min(28, w - 32))
+                    is_compact = h < 22
 
                     # Adaptive CAVA height
                     if h >= 26:
                         cava_lines = 4
                     elif h >= 22:
                         cava_lines = 3
-                    elif h >= 18:
+                    elif h >= 17:
                         cava_lines = 2
                     else:
                         cava_lines = 1
 
-                    info_start_y = 1 + cava_lines + 1
+                    # Responsive vertical layout
+                    cava_gap = 1 if h >= 19 else 0
+                    info_start_y = 1 + cava_lines + cava_gap
                     time_row = info_start_y + 3
                     btn_row = info_start_y + 4
-                    pm_start_y = btn_row + 2
-                    ctrl_y1 = max(pm_start_y + 4, h - 3)
-                    ctrl_y2 = ctrl_y1 + 1
-                    pm_h = max(3, ctrl_y1 - 1 - pm_start_y)
+
+                    # Separators and footer
+                    pm_sep_y = btn_row + 1
+                    pm_start_y = pm_sep_y + 1
+
+                    footer_lines = 1 if h < 16 else 2
+                    footer_start_y = h - footer_lines
+                    footer_sep_y = footer_start_y - 1
+
+                    pm_h = max(3, footer_sep_y - pm_start_y)
                     pm_w = max(10, w - 2)
+                    b_width = max(8, min(24, w - 34))
 
                     # Manage pulsemixer dimensions directly on stdscr
                     if (h, w) != (old_h, old_w) or eps is None:
                         old_h, old_w = h, w
                         if pm and pm.PULSE and pm.PULSE.connected:
                             if eps is None:
-                                eps = EmbeddedPulseScreen(stdscr, pm_start_y, 1, pm_h, pm_w)
+                                eps = EmbeddedPulseScreen(stdscr, pm_start_y, 1, pm_h, pm_w, compact=is_compact)
                             else:
-                                eps.update_dimensions(stdscr, pm_start_y, 1, pm_h, pm_w)
+                                eps.update_dimensions(stdscr, pm_start_y, 1, pm_h, pm_w, compact=is_compact)
 
                     # Auto-commit drag if no events arrived for 0.4s
                     if drag_mode is not None and now - last_drag_time > 0.4:
@@ -520,7 +526,9 @@
                         cx = max(2, (w - len(row_str)) // 2)
                         safe_addstr(stdscr, 1 + r, cx, row_str, active_colors[r])
 
-                    safe_addstr(stdscr, 1 + cava_lines, 2, "─" * max(0, w - 4), curses.color_pair(1))
+                    # Separator line under CAVA (only if height allows)
+                    if h >= 18:
+                        safe_addstr(stdscr, 1 + cava_lines, 2, "─" * max(0, w - 4), curses.color_pair(1))
 
                     # Media Info
                     if media:
@@ -539,11 +547,14 @@
                         # Progress Bar Slider (time_row)
                         safe_addstr(stdscr, time_row, 3, "Time   : ", curses.A_BOLD)
                         if media["length"] > 0:
-                            prog_bar = f"[{draw_bar(display_pos, media['length'], b_width)}]"
+                            fill_len = int(min(max(display_pos / media["length"], 0), 1) * b_width)
+                            safe_addstr(stdscr, time_row, 12, "[")
+                            safe_addstr(stdscr, time_row, 13, "█" * fill_len, curses.color_pair(1) | curses.A_BOLD)
+                            safe_addstr(stdscr, time_row, 13 + fill_len, "░" * (b_width - fill_len), curses.A_DIM)
+                            safe_addstr(stdscr, time_row, 13 + b_width, "]")
                             drag_tag = " (scrubbing)" if drag_mode == 'progress' else ""
                             time_str = f" {fmt_time(display_pos)} / {fmt_time(media['length'])}{drag_tag}"
-                            safe_addstr(stdscr, time_row, 12, prog_bar)
-                            safe_addstr(stdscr, time_row, 12 + len(prog_bar), time_str, curses.color_pair(2) if drag_mode != 'progress' else curses.color_pair(5))
+                            safe_addstr(stdscr, time_row, 14 + b_width, time_str, curses.color_pair(2) if drag_mode != 'progress' else curses.color_pair(5))
                         else:
                             safe_addstr(stdscr, time_row, 12, f"{fmt_time(display_pos)} (Live stream / unknown length)", curses.A_DIM)
 
@@ -592,7 +603,7 @@
                         btn_regions = []
 
                     # Separator above Pulsemixer section
-                    safe_addstr(stdscr, btn_row + 1, 2, "─" * max(0, w - 4), curses.color_pair(1))
+                    safe_addstr(stdscr, pm_sep_y, 2, "─" * max(0, w - 4), curses.color_pair(1))
 
                     # Render Pulsemixer UI directly to stdscr
                     if eps:
@@ -604,11 +615,15 @@
                             pass
 
                     # Controls Footer
-                    safe_addstr(stdscr, ctrl_y1 - 1, 2, "─" * max(0, w - 4), curses.color_pair(1))
-                    ctrls1 = "[Space] Play/Pause   [u/i] Prev/Next Track   [H/L] Seek ±10s   [Mouse] Controls & Scrub"
-                    ctrls2 = "[j/k / ↑↓] Select Stream   [h/l / ←→] Vol ±2%   [m] Mute   [Tab] Mode   [q] Quit"
-                    safe_addstr(stdscr, ctrl_y1, max(0, (w - len(ctrls1)) // 2), ctrls1, curses.A_DIM)
-                    safe_addstr(stdscr, ctrl_y2, max(0, (w - len(ctrls2)) // 2), ctrls2, curses.A_DIM)
+                    safe_addstr(stdscr, footer_sep_y, 2, "─" * max(0, w - 4), curses.color_pair(1))
+                    if footer_lines >= 2:
+                        ctrls1 = "[Space] Play/Pause   [u/i] Track   [H/L] ±10s   [Mouse] Scrub"
+                        ctrls2 = "[j/k] Stream   [h/l] Vol ±2%   [m] Mute   [Tab] Mode   [q] Quit"
+                        safe_addstr(stdscr, footer_start_y, max(0, (w - len(ctrls1)) // 2), ctrls1, curses.A_DIM)
+                        safe_addstr(stdscr, footer_start_y + 1, max(0, (w - len(ctrls2)) // 2), ctrls2, curses.A_DIM)
+                    else:
+                        ctrls1 = "[Space] Play  [u/i] Track  [j/k] Stream  [h/l] Vol  [m] Mute  [q] Quit"
+                        safe_addstr(stdscr, footer_start_y, max(0, (w - len(ctrls1)) // 2), ctrls1, curses.A_DIM)
 
                     stdscr.refresh()
 
@@ -656,25 +671,35 @@
                         eps.change_mode(2)
                         last_pm_poll = 0
                     elif key in (ord('k'), curses.KEY_UP) and eps and eps.data:
-                        focus = eps.top_line_num + eps.focus_line_num
-                        stream_bar = eps.data[focus][0] if focus < len(eps.data) else None
-                        if stream_bar and stream_bar.locked:
-                            n = 1 if eps.data[focus][1] == 0 else eps.data[focus][1] + 1
-                            for _ in range(n): eps.scroll(eps.UP)
+                        if eps.compact and eps.visible_map:
+                            cur_idx = next((i for i, v in enumerate(eps.visible_map) if v[1] == eps.focus_line_num), 0)
+                            prev_entry = eps.visible_map[max(0, cur_idx - 1)]
+                            eps.focus_line_num = prev_entry[1]
                         else:
-                            eps.scroll(eps.UP)
-                        if not eps.data[eps.top_line_num + eps.focus_line_num][0]:
-                            eps.scroll(eps.UP)
+                            focus = eps.top_line_num + eps.focus_line_num
+                            stream_bar = eps.data[focus][0] if focus < len(eps.data) else None
+                            if stream_bar and stream_bar.locked:
+                                n = 1 if eps.data[focus][1] == 0 else eps.data[focus][1] + 1
+                                for _ in range(n): eps.scroll(eps.UP)
+                            else:
+                                eps.scroll(eps.UP)
+                            if not eps.data[eps.top_line_num + eps.focus_line_num][0]:
+                                eps.scroll(eps.UP)
                     elif key in (ord('j'), curses.KEY_DOWN) and eps and eps.data:
-                        focus = eps.top_line_num + eps.focus_line_num
-                        stream_bar = eps.data[focus][0] if focus < len(eps.data) else None
-                        if stream_bar and stream_bar.locked:
-                            n = 1 if eps.data[focus][1] == eps.data[focus][3] - 1 else ((eps.data[focus][3] - 1) - eps.data[focus][1]) + 1
-                            for _ in range(n): eps.scroll(eps.DOWN)
+                        if eps.compact and eps.visible_map:
+                            cur_idx = next((i for i, v in enumerate(eps.visible_map) if v[1] == eps.focus_line_num), 0)
+                            next_entry = eps.visible_map[min(len(eps.visible_map) - 1, cur_idx + 1)]
+                            eps.focus_line_num = next_entry[1]
                         else:
-                            eps.scroll(eps.DOWN)
-                        if not eps.data[eps.top_line_num + eps.focus_line_num][0]:
-                            eps.scroll(eps.DOWN)
+                            focus = eps.top_line_num + eps.focus_line_num
+                            stream_bar = eps.data[focus][0] if focus < len(eps.data) else None
+                            if stream_bar and stream_bar.locked:
+                                n = 1 if eps.data[focus][1] == eps.data[focus][3] - 1 else ((eps.data[focus][3] - 1) - eps.data[focus][1]) + 1
+                                for _ in range(n): eps.scroll(eps.DOWN)
+                            else:
+                                eps.scroll(eps.DOWN)
+                            if not eps.data[eps.top_line_num + eps.focus_line_num][0]:
+                                eps.scroll(eps.DOWN)
                     elif key in (ord('h'), curses.KEY_LEFT, ord('-')) and eps and eps.data:
                         focus = eps.top_line_num + eps.focus_line_num
                         if focus < len(eps.data):
@@ -763,7 +788,7 @@
                                 curses.flushinp()
 
                             # Handle Pulsemixer Mouse Interaction (Tabs, Stream Select, Wheel, Volume Drag)
-                            if eps and pm_start_y <= my < pm_start_y + pm_h and drag_mode is None:
+                            if eps and pm_start_y <= my < footer_sep_y and drag_mode is None:
                                 ry = my - pm_start_y
                                 rx = max(0, mx - 1)
                                 if ry == 0 and is_press:
@@ -778,30 +803,28 @@
                                         eps.change_mode(2)
                                     last_pm_poll = 0
                                 elif ry > 0:
-                                    top = eps.top_line_num
-                                    visible_data = eps.data[top:top + eps.lines]
-                                    line_idx = ry - 1
-                                    if 0 <= line_idx < len(visible_data):
-                                        data_entry = visible_data[line_idx]
-                                        bar_item, side_item = data_entry[0], data_entry[1]
+                                    # Lookup row in visible_map
+                                    target_entry = next((v for v in eps.visible_map if v[0] == ry), None)
+                                    if target_entry:
+                                        _, stream_data_idx, bar_item, bartype = target_entry
+                                        side_to_set = bartype if not (eps.compact and bar_item.locked) else 0
                                         if is_press or (is_motion and (bstate & curses.BUTTON1_PRESSED)):
-                                            eps.focus_line_num = line_idx
-                                            # If click/drag is within volume bar region
+                                            eps.focus_line_num = stream_data_idx
                                             off = 6 * (eps.cols // (43 if eps.cols <= 60 else 25))
                                             bar_start_x = 22 + off + 6
                                             bar_len = max(5, eps.cols - 31 - off)
                                             if rx >= bar_start_x and bar_item:
                                                 pct = int(min(1.0, max(0.0, (rx - bar_start_x) / bar_len)) * 100)
-                                                bar_item.set(pct, side_item)
+                                                bar_item.set(pct, side_to_set)
                                                 last_pm_poll = 0
                                         # Mouse wheel volume adjustments
                                         if hasattr(curses, 'BUTTON4_PRESSED') and (bstate & curses.BUTTON4_PRESSED):
                                             if bar_item:
-                                                bar_item.move(3, side_item)
+                                                bar_item.move(3, side_to_set)
                                                 last_pm_poll = 0
                                         elif hasattr(curses, 'BUTTON5_PRESSED') and (bstate & curses.BUTTON5_PRESSED):
                                             if bar_item:
-                                                bar_item.move(-3, side_item)
+                                                bar_item.move(-3, side_to_set)
                                                 last_pm_poll = 0
                         except Exception:
                             pass
