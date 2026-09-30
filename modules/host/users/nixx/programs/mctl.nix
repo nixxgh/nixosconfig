@@ -110,7 +110,7 @@
 
         def prompt_seek(stdscr, h, w, media):
             prompt = "Seek to (e.g. 1:30, 45, +15s, 50%): "
-            py = min(h - 1, 9)
+            py = min(h - 1, 10)
             safe_addstr(stdscr, py, 2, " " * (w - 4))
             safe_addstr(stdscr, py, 2, prompt, curses.color_pair(5) | curses.A_BOLD)
             stdscr.refresh()
@@ -198,6 +198,7 @@
             drag_mode = None  # None, 'progress', or 'volume'
             drag_val = 0
             last_drag_time = 0.0
+            btn_regions = []
 
             try:
                 while True:
@@ -275,6 +276,7 @@
                         safe_addstr(stdscr, 5, 3, "Artist : ", curses.A_BOLD)
                         safe_addstr(stdscr, 5, 12, media['artist'] or 'Unknown Artist', curses.color_pair(1))
 
+                        # Progress Bar Slider (Line 6)
                         safe_addstr(stdscr, 6, 3, "Time   : ", curses.A_BOLD)
                         if media["length"] > 0:
                             prog_bar = f"[{bar(display_pos, media['length'], b_width)}]"
@@ -284,6 +286,38 @@
                             safe_addstr(stdscr, 6, 12 + len(prog_bar), time_str, curses.color_pair(2) if drag_mode != 'progress' else curses.color_pair(5))
                         else:
                             safe_addstr(stdscr, 6, 12, f"{fmt_time(display_pos)} (Live stream / unknown length)", curses.A_DIM)
+
+                        # 5 Interactive Control Buttons under Progress Bar (Line 7)
+                        safe_addstr(stdscr, 7, 3, "Control: ", curses.A_BOLD)
+                        is_playing = media["status"] == "Playing"
+                        if w >= 58:
+                            b1 = "[⏮ Prev]"
+                            b2 = "[-10s]"
+                            b3 = "[⏸ Pause]" if is_playing else "[▶ Play]"
+                            b4 = "[+10s]"
+                            b5 = "[Next ⏭]"
+                        else:
+                            b1 = "[⏮]"
+                            b2 = "[-10]"
+                            b3 = "[⏸]" if is_playing else "[▶]"
+                            b4 = "[+10]"
+                            b5 = "[⏭]"
+
+                        btns_data = [
+                            ("prev", b1, curses.color_pair(1) | curses.A_BOLD),
+                            ("b10", b2, curses.color_pair(1) | curses.A_BOLD),
+                            ("toggle", b3, (curses.color_pair(2) if is_playing else curses.color_pair(5)) | curses.A_BOLD),
+                            ("f10", b4, curses.color_pair(1) | curses.A_BOLD),
+                            ("next", b5, curses.color_pair(1) | curses.A_BOLD),
+                        ]
+
+                        btn_regions = []
+                        bx = 12
+                        spacing = 2 if w >= 58 else 1
+                        for action, text, color in btns_data:
+                            safe_addstr(stdscr, 7, bx, text, color)
+                            btn_regions.append((action, bx, bx + len(text)))
+                            bx += len(text) + spacing
                     else:
                         safe_addstr(stdscr, 3, 3, "Player : ", curses.A_BOLD)
                         safe_addstr(stdscr, 3, 12, "Idle", curses.A_DIM)
@@ -293,21 +327,24 @@
                         safe_addstr(stdscr, 5, 12, "(Start Spotify, Zen Browser, or MPV)", curses.A_DIM)
                         safe_addstr(stdscr, 6, 3, "Time   : ", curses.A_BOLD)
                         safe_addstr(stdscr, 6, 12, "--:-- / --:--", curses.A_DIM)
+                        safe_addstr(stdscr, 7, 3, "Control: ", curses.A_BOLD)
+                        safe_addstr(stdscr, 7, 12, "[⏮ Prev]  [-10s]  [▶ Play]  [+10s]  [Next ⏭]", curses.A_DIM)
+                        btn_regions = []
 
-                    # Volume Info
+                    # Volume Info (Line 8)
                     vol_icon = "🔇 MUTED" if muted else f"🔊 {display_vol}%"
                     vol_color = curses.color_pair(4) if muted else curses.color_pair(2)
-                    safe_addstr(stdscr, 7, 3, "Volume : ", curses.A_BOLD)
+                    safe_addstr(stdscr, 8, 3, "Volume : ", curses.A_BOLD)
                     vol_bar = f"[{bar(display_vol, 100, b_width)}]"
-                    safe_addstr(stdscr, 7, 12, vol_bar)
-                    safe_addstr(stdscr, 7, 12 + len(vol_bar), f" {vol_icon}", vol_color | curses.A_BOLD)
+                    safe_addstr(stdscr, 8, 12, vol_bar)
+                    safe_addstr(stdscr, 8, 12 + len(vol_bar), f" {vol_icon}", vol_color | curses.A_BOLD)
 
                     # Controls Footer
-                    ctrl_y1 = max(9, h - 3)
+                    ctrl_y1 = max(10, h - 3)
                     ctrl_y2 = ctrl_y1 + 1
                     safe_addstr(stdscr, ctrl_y1 - 1, 2, "─" * max(0, w - 4), curses.color_pair(1))
                     ctrls1 = "[Space] Play/Pause   [u/i] Prev/Next Track   [h/l] Seek ±10s   [0-9] %"
-                    ctrls2 = "[j/k] Vol ±5%        [Mouse] Click/Drag      [m] Mute          [q] Quit"
+                    ctrls2 = "[j/k] Vol ±5%        [Mouse] Click Buttons & Drag Sliders      [q] Quit"
                     safe_addstr(stdscr, ctrl_y1, max(0, (w - len(ctrls1)) // 2), ctrls1, curses.A_DIM)
                     safe_addstr(stdscr, ctrl_y2, max(0, (w - len(ctrls2)) // 2), ctrls2, curses.A_DIM)
 
@@ -380,14 +417,37 @@
                             is_release = bool(bstate & (curses.BUTTON1_RELEASED | curses.BUTTON1_CLICKED))
                             is_motion = bool(bstate & curses.REPORT_MOUSE_POSITION) or (drag_mode is not None and not is_release)
 
-                            # Handle initial press on progress or volume bar
+                            # Handle button click on Line 7 (5 buttons under progress bar)
+                            if my == 7 and is_press and drag_mode is None:
+                                for action, x1, x2 in btn_regions:
+                                    if x1 <= mx <= x2:
+                                        if action == "prev":
+                                            fire_cmd(["${pkgs.playerctl}/bin/playerctl", "previous"])
+                                        elif action == "b10":
+                                            if media and media["length"] > 0:
+                                                seek_target = max(0, display_pos - 10)
+                                                seek_time = now_m
+                                            fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "10-"])
+                                        elif action == "toggle":
+                                            fire_cmd(["${pkgs.playerctl}/bin/playerctl", "play-pause"])
+                                        elif action == "f10":
+                                            if media and media["length"] > 0:
+                                                seek_target = min(media["length"], display_pos + 10)
+                                                seek_time = now_m
+                                            fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "10+"])
+                                        elif action == "next":
+                                            fire_cmd(["${pkgs.playerctl}/bin/playerctl", "next"])
+                                        curses.flushinp()
+                                        break
+
+                            # Handle initial press on progress bar (Line 6) or volume bar (Line 8)
                             if is_press and drag_mode is None:
                                 if my == 6 and media and media["length"] > 0 and (12 <= mx <= 13 + b_width):
                                     drag_mode = 'progress'
                                     drag_val = int(media["length"] * x_to_ratio(mx, b_width))
                                     last_drag_time = now_m
                                     stdscr.timeout(20)
-                                elif my == 7 and (12 <= mx <= 13 + b_width):
+                                elif my == 8 and (12 <= mx <= 13 + b_width):
                                     drag_mode = 'volume'
                                     drag_val = int(x_to_ratio(mx, b_width) * 100)
                                     last_drag_time = now_m
