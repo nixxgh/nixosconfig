@@ -26,6 +26,8 @@ in
         self.homeModules.atuin
         self.homeModules.tealdeer
         self.homeModules.btop
+        self.homeModules.cava
+        self.homeModules.mctl
         self.homeModules.antigravity
         self.homeModules.packages
         self.homeModules.astal

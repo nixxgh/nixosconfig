@@ -13,6 +13,8 @@
         libnotify
         pavucontrol
         mpvpaper
+        pulsemixer
+        playerctl
       ];
     };
 }
