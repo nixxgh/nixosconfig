@@ -10,6 +10,7 @@
       mctlPkg = pkgs.writeScriptBin "mctl" ''
         #!${pkgs.python3}/bin/python3
         import curses
+        from importlib.machinery import SourceFileLoader
         import os
         import subprocess
         import sys
@@ -29,20 +30,6 @@
                 subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             except Exception:
                 pass
-
-        def get_volume():
-            out = run_cmd(["${pkgs.wireplumber}/bin/wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"])
-            vol = 0
-            muted = False
-            if "MUTED" in out:
-                muted = True
-            parts = out.split()
-            if len(parts) >= 2:
-                try:
-                    vol = int(float(parts[1]) * 100)
-                except ValueError:
-                    pass
-            return vol, muted
 
         def get_media():
             fmt = "{{playerName}}||{{status}}||{{artist}}||{{title}}||{{position}}||{{mpris:length}}"
@@ -170,6 +157,77 @@
                     pass
             return None
 
+        # Load pulsemixer core engine
+        pm = None
+        try:
+            loader = SourceFileLoader('pulsemixer', '${pkgs.pulsemixer}/bin/pulsemixer')
+            pm = loader.load_module()
+            pm.CFG = pm.Config().load()
+            pm.PULSE = pm.Pulse('mctl', reconnect=True)
+        except Exception:
+            pm = None
+
+        class EmbeddedPulseScreen(pm.Screen if pm else object):
+            def __init__(self, win, h, w):
+                self.screen = win
+                self.update_dimensions(win, h, w)
+                self.index = 0
+                self.top_line_num = 0
+                self.focus_line_num = 0
+                self.info, self.menu = str, str
+                self.mode_keys = ['F1', 'F2', 'F3']
+                self.menu_titles = ['F1 Output', 'F2 Input', 'F3 Cards']
+                self.data = []
+                self.mode = {0: 1, 1: 0, 2: 0}
+                self.modes_data = [[[], 0, 0] for _ in range(6)]
+                self.active_mode = 0
+                self.old_mode = 0
+                self.change_mode_allowed = True
+                self.n_lines = 0
+                self.color_mode = 2
+                self.green = curses.color_pair(2)
+                self.yellow = curses.color_pair(5)
+                self.red = curses.color_pair(4)
+                self.muted_color = curses.color_pair(4)
+                try:
+                    curses.init_pair(240, 240, -1)
+                    curses.init_pair(243, 243, -1)
+                    curses.init_pair(246, 246, -1)
+                    self.gray_gradient = [curses.color_pair(240), curses.color_pair(243), curses.color_pair(246)]
+                except Exception:
+                    self.gray_gradient = [curses.A_NORMAL] * 3
+                self.gradient = [self.green, self.yellow, self.red]
+                self.submenu_show = False
+                self.helpwin_show = False
+                self.selected = None
+                self.action = None
+                self.server_info = pm.PULSE.get_server_info() if pm and pm.PULSE else None
+
+            def update_dimensions(self, win, h, w):
+                self.screen = win
+                self.h = h
+                self.w = w
+                self.lines = max(1, h - 2)
+                self.cols = max(10, w - 1)
+
+            def display_line(self, index, line, mod=curses.A_NORMAL, win=None):
+                target_win = win or self.screen
+                if not (0 <= index < self.h):
+                    return
+                shift = 0
+                for i in line.split('\n'):
+                    parts = i.rsplit('|')
+                    head = "".join(parts[:-1])
+                    tail = int(parts[-1] or 0)
+                    if 0 <= shift < self.w:
+                        text = head[:self.w - shift - 1]
+                        if text:
+                            try:
+                                target_win.addstr(index, shift, text, tail | mod)
+                            except curses.error:
+                                pass
+                    shift += len(head)
+
         def main(stdscr):
             curses.curs_set(0)
             try:
@@ -181,7 +239,10 @@
 
             stdscr.timeout(35)
             curses.start_color()
-            curses.use_default_colors()
+            try:
+                curses.use_default_colors()
+            except Exception:
+                pass
 
             curses.init_pair(1, curses.COLOR_CYAN, -1)
             curses.init_pair(2, curses.COLOR_GREEN, -1)
@@ -244,13 +305,11 @@
 
             seek_target = None
             seek_time = 0.0
-            vol_lock = None
-            last_vol_cmd = 0.0
             cached_media = None
-            cached_vol = (0, False)
             last_poll_time = 0.0
+            last_pm_poll = 0.0
 
-            drag_mode = None  # None, 'progress', or 'volume'
+            drag_mode = None  # None or 'progress'
             drag_val = 0
             last_drag_time = 0.0
             btn_regions = []
@@ -264,20 +323,23 @@
                 curses.color_pair(1) | curses.A_BOLD,  # Cyan (base)
             ]
 
+            # Initialize Embedded Pulsemixer Subwindow
+            pm_win = None
+            eps = None
+            old_h, old_w = 0, 0
+
             try:
                 while True:
                     now = time.time()
                     h, w = stdscr.getmaxyx()
                     b_width = max(10, min(28, w - 32))
 
-                    # Adaptive CAVA height: bigger on larger windows, compact on small
-                    if h >= 22:
-                        cava_lines = 5
-                    elif h >= 18:
+                    # Adaptive CAVA height
+                    if h >= 26:
                         cava_lines = 4
-                    elif h >= 15:
+                    elif h >= 22:
                         cava_lines = 3
-                    elif h >= 13:
+                    elif h >= 18:
                         cava_lines = 2
                     else:
                         cava_lines = 1
@@ -285,7 +347,24 @@
                     info_start_y = 1 + cava_lines + 1
                     time_row = info_start_y + 3
                     btn_row = info_start_y + 4
-                    vol_row = info_start_y + 5
+                    pm_start_y = btn_row + 2
+                    ctrl_y1 = max(pm_start_y + 4, h - 3)
+                    ctrl_y2 = ctrl_y1 + 1
+                    pm_h = max(3, ctrl_y1 - 1 - pm_start_y)
+                    pm_w = max(10, w - 2)
+
+                    # Manage pulsemixer subwindow resize / instantiation
+                    if (h, w) != (old_h, old_w) or pm_win is None:
+                        old_h, old_w = h, w
+                        try:
+                            pm_win = curses.newwin(pm_h, pm_w, pm_start_y, 1)
+                        except Exception:
+                            pm_win = None
+                        if pm and pm.PULSE and pm.PULSE.connected:
+                            if eps is None and pm_win:
+                                eps = EmbeddedPulseScreen(pm_win, pm_h, pm_w)
+                            elif eps and pm_win:
+                                eps.update_dimensions(pm_win, pm_h, pm_w)
 
                     # Auto-commit drag if no events arrived for 0.4s
                     if drag_mode is not None and now - last_drag_time > 0.4:
@@ -293,20 +372,23 @@
                             fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", str(drag_val)])
                             seek_target = drag_val
                             seek_time = now
-                        elif drag_mode == 'volume':
-                            fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", f"{drag_val}%"])
-                            vol_lock = (drag_val, now)
                         drag_mode = None
                         stdscr.timeout(35)
 
-                    # Poll external MPRIS and WirePlumber commands decoupled from 30fps visualizer
+                    # Poll MPRIS
                     if drag_mode is None:
                         if now - last_poll_time >= 0.35:
                             cached_media = get_media()
-                            cached_vol = get_volume()
                             last_poll_time = now
                     media = cached_media
-                    vol, muted = cached_vol
+
+                    # Poll pulsemixer streams
+                    if eps and (now - last_pm_poll >= 0.25):
+                        try:
+                            eps.get_data()
+                        except Exception:
+                            pass
+                        last_pm_poll = now
 
                     # Calculate display position
                     if drag_mode == 'progress':
@@ -323,18 +405,6 @@
                             display_pos = media["pos"] if media else 0
                     else:
                         display_pos = media["pos"] if media else 0
-
-                    # Calculate display volume
-                    if drag_mode == 'volume':
-                        display_vol = drag_val
-                    elif vol_lock is not None:
-                        if now - vol_lock[1] < 0.8:
-                            display_vol = vol_lock[0]
-                        else:
-                            vol_lock = None
-                            display_vol = vol
-                    else:
-                        display_vol = vol
 
                     stdscr.erase()
 
@@ -433,20 +503,24 @@
                         safe_addstr(stdscr, btn_row, 12, "[⏮ Prev]  [-10s]  [▶ Play]  [+10s]  [Next ⏭]", curses.A_DIM)
                         btn_regions = []
 
-                    # Volume Info (vol_row)
-                    vol_icon = "🔇 MUTED" if muted else f"🔊 {display_vol}%"
-                    vol_color = curses.color_pair(4) if muted else curses.color_pair(2)
-                    safe_addstr(stdscr, vol_row, 3, "Volume : ", curses.A_BOLD)
-                    vol_bar = f"[{bar(display_vol, 100, b_width)}]"
-                    safe_addstr(stdscr, vol_row, 12, vol_bar)
-                    safe_addstr(stdscr, vol_row, 12 + len(vol_bar), f" {vol_icon}", vol_color | curses.A_BOLD)
+                    # Separator above Pulsemixer section
+                    safe_addstr(stdscr, btn_row + 1, 2, "─" * max(0, w - 4), curses.color_pair(1))
+
+                    # Render Pulsemixer UI in subwindow
+                    if eps and pm_win:
+                        try:
+                            pm_win.erase()
+                            eps.update_menu()
+                            eps.update_info()
+                            eps.display()
+                            pm_win.noutrefresh()
+                        except Exception:
+                            pass
 
                     # Controls Footer
-                    ctrl_y1 = max(vol_row + 2, h - 3)
-                    ctrl_y2 = ctrl_y1 + 1
                     safe_addstr(stdscr, ctrl_y1 - 1, 2, "─" * max(0, w - 4), curses.color_pair(1))
-                    ctrls1 = "[Space] Play/Pause   [u/i] Prev/Next Track   [h/l] Seek ±10s   [0-9] %"
-                    ctrls2 = "[j/k] Vol ±5%        [Mouse] Click Buttons & Drag Sliders      [q] Quit"
+                    ctrls1 = "[Space] Play/Pause   [u/i] Prev/Next Track   [H/L] Seek ±10s   [Mouse] Controls & Scrub"
+                    ctrls2 = "[j/k / ↑↓] Select Stream   [h/l / ←→] Vol ±2%   [m] Mute   [Tab] Mode   [q] Quit"
                     safe_addstr(stdscr, ctrl_y1, max(0, (w - len(ctrls1)) // 2), ctrls1, curses.A_DIM)
                     safe_addstr(stdscr, ctrl_y2, max(0, (w - len(ctrls2)) // 2), ctrls2, curses.A_DIM)
 
@@ -465,51 +539,85 @@
                         fire_cmd(["${pkgs.playerctl}/bin/playerctl", "next"])
                     elif key in (ord('u'), ord('U'), ord('p'), ord('P')):
                         fire_cmd(["${pkgs.playerctl}/bin/playerctl", "previous"])
-                    elif key in (ord('l'), curses.KEY_RIGHT, ord('.')):
+                    elif key in (ord('L'), ord('>'), ord(']')):
                         # Seek forward 10s
                         if media and media["length"] > 0:
                             seek_target = min(media["length"], display_pos + 10)
                             seek_time = time.time()
                         fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "10+"])
-                    elif key in (ord('L'), ord('>'), ord(']')):
-                        # Seek forward 30s
-                        if media and media["length"] > 0:
-                            seek_target = min(media["length"], display_pos + 30)
-                            seek_time = time.time()
-                        fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "30+"])
-                    elif key in (ord('h'), curses.KEY_LEFT, ord(',')):
+                    elif key in (ord('H'), ord('<'), ord('[')):
                         # Seek backward 10s
                         if media and media["length"] > 0:
                             seek_target = max(0, display_pos - 10)
                             seek_time = time.time()
                         fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "10-"])
-                    elif key in (ord('H'), ord('<'), ord('[')):
-                        # Seek backward 30s
-                        if media and media["length"] > 0:
-                            seek_target = max(0, display_pos - 30)
-                            seek_time = time.time()
-                        fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", "30-"])
-                    elif ord('0') <= key <= ord('9'):
-                        # Jump directly to track percentage (0% to 90%)
-                        if media and media["length"] > 0:
-                            pct = (key - ord('0')) * 0.10
-                            target = int(media["length"] * pct)
-                            seek_target = target
-                            seek_time = time.time()
-                            fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", str(target)])
                     elif key in (ord('s'), ord('S'), ord(':'), ord('/')):
                         tgt = prompt_seek(stdscr, h, w, media)
                         if tgt is not None:
                             seek_target = tgt
                             seek_time = time.time()
-                    elif key in (ord('k'), ord('K'), curses.KEY_UP):
-                        vol_lock = (min(100, display_vol + 5), time.time())
-                        fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", "5%+"])
-                    elif key in (ord('j'), ord('J'), curses.KEY_DOWN):
-                        vol_lock = (max(0, display_vol - 5), time.time())
-                        fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "5%-"])
-                    elif key in (ord('m'), ord('M')):
-                        fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"])
+                    elif key == ord('\t'):
+                        if eps:
+                            eps.cycle_mode()
+                            last_pm_poll = 0
+                    elif key == curses.KEY_F1 and eps:
+                        eps.change_mode(0)
+                        last_pm_poll = 0
+                    elif key == curses.KEY_F2 and eps:
+                        eps.change_mode(1)
+                        last_pm_poll = 0
+                    elif key == curses.KEY_F3 and eps:
+                        eps.change_mode(2)
+                        last_pm_poll = 0
+                    elif key in (ord('k'), curses.KEY_UP) and eps and eps.data:
+                        focus = eps.top_line_num + eps.focus_line_num
+                        bar = eps.data[focus][0] if focus < len(eps.data) else None
+                        if bar and bar.locked:
+                            n = 1 if eps.data[focus][1] == 0 else eps.data[focus][1] + 1
+                            for _ in range(n): eps.scroll(eps.UP)
+                        else:
+                            eps.scroll(eps.UP)
+                        if not eps.data[eps.top_line_num + eps.focus_line_num][0]:
+                            eps.scroll(eps.UP)
+                    elif key in (ord('j'), curses.KEY_DOWN) and eps and eps.data:
+                        focus = eps.top_line_num + eps.focus_line_num
+                        bar = eps.data[focus][0] if focus < len(eps.data) else None
+                        if bar and bar.locked:
+                            n = 1 if eps.data[focus][1] == eps.data[focus][3] - 1 else ((eps.data[focus][3] - 1) - eps.data[focus][1]) + 1
+                            for _ in range(n): eps.scroll(eps.DOWN)
+                        else:
+                            eps.scroll(eps.DOWN)
+                        if not eps.data[eps.top_line_num + eps.focus_line_num][0]:
+                            eps.scroll(eps.DOWN)
+                    elif key in (ord('h'), curses.KEY_LEFT, ord('-')) and eps and eps.data:
+                        focus = eps.top_line_num + eps.focus_line_num
+                        if focus < len(eps.data):
+                            bar, side = eps.data[focus][0], eps.data[focus][1]
+                            if bar:
+                                bar.move(-2, side)
+                                last_pm_poll = 0
+                    elif key in (ord('l'), curses.KEY_RIGHT, ord('+'), ord('=')) and eps and eps.data:
+                        focus = eps.top_line_num + eps.focus_line_num
+                        if focus < len(eps.data):
+                            bar, side = eps.data[focus][0], eps.data[focus][1]
+                            if bar:
+                                bar.move(2, side)
+                                last_pm_poll = 0
+                    elif key in (ord('m'), ord('M')) and eps and eps.data:
+                        focus = eps.top_line_num + eps.focus_line_num
+                        if focus < len(eps.data):
+                            bar = eps.data[focus][0]
+                            if bar:
+                                bar.mute_toggle()
+                                last_pm_poll = 0
+                    elif ord('0') <= key <= ord('9') and eps and eps.data:
+                        focus = eps.top_line_num + eps.focus_line_num
+                        if focus < len(eps.data):
+                            bar, side = eps.data[focus][0], eps.data[focus][1]
+                            if bar:
+                                pct = 100 if key == ord('0') else (key - ord('0')) * 10
+                                bar.set(pct, side)
+                                last_pm_poll = 0
                     elif key == curses.KEY_MOUSE:
                         try:
                             _, mx, my, _, bstate = curses.getmouse()
@@ -542,45 +650,73 @@
                                         curses.flushinp()
                                         break
 
-                            # Handle initial press on progress bar (time_row) or volume bar (vol_row)
+                            # Handle initial press on track progress bar
                             if is_press and drag_mode is None:
                                 if my == time_row and media and media["length"] > 0 and (12 <= mx <= 13 + b_width):
                                     drag_mode = 'progress'
                                     drag_val = int(media["length"] * x_to_ratio(mx, b_width))
                                     last_drag_time = now_m
                                     stdscr.timeout(20)
-                                elif my == vol_row and (12 <= mx <= 13 + b_width):
-                                    drag_mode = 'volume'
-                                    drag_val = int(x_to_ratio(mx, b_width) * 100)
-                                    last_drag_time = now_m
-                                    stdscr.timeout(20)
 
-                            # Handle active dragging (smooth real-time slider follow)
-                            if drag_mode is not None and (is_motion or is_press):
+                            # Handle active track scrubbing drag
+                            if drag_mode == 'progress' and (is_motion or is_press):
                                 last_drag_time = now_m
-                                if drag_mode == 'progress' and media and media["length"] > 0:
+                                if media and media["length"] > 0:
                                     drag_val = int(media["length"] * x_to_ratio(mx, b_width))
-                                elif drag_mode == 'volume':
-                                    drag_val = int(x_to_ratio(mx, b_width) * 100)
-                                    if now_m - last_vol_cmd > 0.08:
-                                        last_vol_cmd = now_m
-                                        fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", f"{drag_val}%"])
 
-                            # Handle release / click commit
-                            if is_release and drag_mode is not None:
+                            # Handle track scrub release commit
+                            if is_release and drag_mode == 'progress':
                                 last_drag_time = now_m
-                                if drag_mode == 'progress' and media and media["length"] > 0:
+                                if media and media["length"] > 0:
                                     drag_val = int(media["length"] * x_to_ratio(mx, b_width))
                                     seek_target = drag_val
                                     seek_time = now_m
                                     fire_cmd(["${pkgs.playerctl}/bin/playerctl", "position", str(drag_val)])
-                                elif drag_mode == 'volume':
-                                    drag_val = int(x_to_ratio(mx, b_width) * 100)
-                                    vol_lock = (drag_val, now_m)
-                                    fire_cmd(["${pkgs.wireplumber}/bin/wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", f"{drag_val}%"])
                                 drag_mode = None
                                 stdscr.timeout(35)
                                 curses.flushinp()
+
+                            # Handle Pulsemixer Mouse Interaction (Tabs, Stream Select, Wheel, Volume Drag)
+                            if eps and pm_start_y <= my < pm_start_y + pm_h and drag_mode is None:
+                                ry = my - pm_start_y
+                                rx = max(0, mx - 1)
+                                if ry == 0 and is_press:
+                                    f1 = len(eps.menu_titles[0]) + 1
+                                    f2 = f1 + len(eps.menu_titles[1]) + 2
+                                    f3 = f2 + len(eps.menu_titles[2]) + 3
+                                    if rx in range(0, f1):
+                                        eps.change_mode(0)
+                                    elif rx in range(f1, f2):
+                                        eps.change_mode(1)
+                                    elif rx in range(f2, f3):
+                                        eps.change_mode(2)
+                                    last_pm_poll = 0
+                                elif ry > 0:
+                                    top = eps.top_line_num
+                                    visible_data = eps.data[top:top + eps.lines]
+                                    line_idx = ry - 1
+                                    if 0 <= line_idx < len(visible_data):
+                                        data_entry = visible_data[line_idx]
+                                        bar_item, side_item = data_entry[0], data_entry[1]
+                                        if is_press or (is_motion and (bstate & curses.BUTTON1_PRESSED)):
+                                            eps.focus_line_num = line_idx
+                                            # If click/drag is within volume bar region
+                                            off = 6 * (eps.cols // (43 if eps.cols <= 60 else 25))
+                                            bar_start_x = 22 + off + 6
+                                            bar_len = max(5, eps.cols - 31 - off)
+                                            if rx >= bar_start_x and bar_item:
+                                                pct = int(min(1.0, max(0.0, (rx - bar_start_x) / bar_len)) * 100)
+                                                bar_item.set(pct, side_item)
+                                                last_pm_poll = 0
+                                        # Mouse wheel volume adjustments
+                                        if hasattr(curses, 'BUTTON4_PRESSED') and (bstate & curses.BUTTON4_PRESSED):
+                                            if bar_item:
+                                                bar_item.move(3, side_item)
+                                                last_pm_poll = 0
+                                        elif hasattr(curses, 'BUTTON5_PRESSED') and (bstate & curses.BUTTON5_PRESSED):
+                                            if bar_item:
+                                                bar_item.move(-3, side_item)
+                                                last_pm_poll = 0
                         except Exception:
                             pass
             finally:
