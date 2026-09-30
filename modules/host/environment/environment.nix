@@ -40,9 +40,14 @@
         forcecleanall = "(nix-env --delete-generations old -p ~/.local/state/nix/profiles/home-manager 2>/dev/null || true) && nix-collect-garbage -d && sudo nix-collect-garbage -d && nix store optimise";
       };
 
-      # Bootloader
+      # Bootloader & Display Emulation
       boot.loader.systemd-boot.enable = true;
       boot.loader.efi.canTouchEfiVariables = true;
+
+      # Force unused HDMI-A-1 as a virtual 1920x1440 display for wireless iPad streaming
+      boot.kernelParams = [
+        "video=HDMI-A-1:1920x1440@60e"
+      ];
 
       # Networking
       networking.networkmanager.enable = true;

@@ -15,6 +15,7 @@
         openFirewall = true; # Opens Sunshine streaming & web UI ports
         settings = {
           system_tray = "disabled";
+          output_name = "HDMI-A-1";
         };
       };
 
