@@ -76,7 +76,7 @@
                 return f"{h:02d}:{m:02d}:{s:02d}"
             return f"{m:02d}:{s:02d}"
 
-        def bar(val, max_val, width=20):
+        def draw_bar(val, max_val, width=20):
             if max_val <= 0 or width <= 0:
                 return "░" * max(1, width)
             fill = int(min(max(val / max_val, 0), 1) * width)
@@ -451,7 +451,7 @@
                         # Progress Bar Slider (time_row)
                         safe_addstr(stdscr, time_row, 3, "Time   : ", curses.A_BOLD)
                         if media["length"] > 0:
-                            prog_bar = f"[{bar(display_pos, media['length'], b_width)}]"
+                            prog_bar = f"[{draw_bar(display_pos, media['length'], b_width)}]"
                             drag_tag = " (scrubbing)" if drag_mode == 'progress' else ""
                             time_str = f" {fmt_time(display_pos)} / {fmt_time(media['length'])}{drag_tag}"
                             safe_addstr(stdscr, time_row, 12, prog_bar)
