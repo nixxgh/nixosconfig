@@ -29,6 +29,8 @@
         (hideDesktopEntry "nvim")
       ];
 
+      stylix.targets.rofi.enable = false;
+
       programs.fuzzel = {
         enable = true;
         settings = {

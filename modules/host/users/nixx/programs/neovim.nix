@@ -11,6 +11,12 @@
       tailwindcss-language-server
     ];
 
+    stylix.targets.neovim.transparentBackground = {
+      main = true;
+      signColumn = true;
+      numberLine = true;
+    };
+
     programs.neovim = {
       enable = true;
       defaultEditor = true;
@@ -23,7 +29,7 @@
         nvim-treesitter.withAllGrammars
         telescope-nvim
         plenary-nvim
-        catppuccin-nvim
+        gruvbox-nvim
         lualine-nvim
         nvim-web-devicons
         vim-tmux-navigator
@@ -48,11 +54,22 @@
         vim.opt.updatetime = 250
         vim.opt.timeoutlen = 300
 
-        -- Theme & Statusline
-        vim.cmd.colorscheme "catppuccin-mocha"
+        -- Theme & Statusline (Matching Alacritty Gruvbox Dark Hard & transparency)
+        require('gruvbox').setup({
+          transparent_mode = true,
+          contrast = "hard",
+          overrides = {
+            Normal = { bg = "NONE" },
+            NormalNC = { bg = "NONE" },
+            SignColumn = { bg = "NONE" },
+            LineNr = { bg = "NONE" },
+            EndOfBuffer = { bg = "NONE" },
+          },
+        })
+        vim.cmd.colorscheme "gruvbox"
         require('lualine').setup {
           options = {
-            theme = 'catppuccin-mocha'
+            theme = 'gruvbox',
           }
         }
 

@@ -11,6 +11,8 @@
         inputs.zen-browser.homeModules.default
       ];
 
+      stylix.targets.zen-browser.profileNames = [ "Default Profile" ];
+
       programs.zen-browser = {
         enable = true;
         setAsDefaultBrowser = true;

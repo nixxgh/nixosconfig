@@ -35,7 +35,7 @@
               "-o"
               "no-audio loop hwdec=auto"
               "*"
-              "/home/nixx/Pictures/Wallpapers/infinite-tsukuyomi-naruto.3840x2160.mp4"
+              "/home/nixx/Pictures/Wallpapers/the-bridge-under-the-northern-lights-moewalls-com.mp4"
             ]
           ];
 

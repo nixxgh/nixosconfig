@@ -76,6 +76,12 @@
           set -g status-right "#[fg=cyan]%H:%M #[fg=white]%d-%b"
           set -g window-status-current-format "#[bold,fg=yellow]● #I:#W"
           set -g window-status-format "#[fg=colour8]○ #I:#W"
+
+          # Seamless terminal transparency & background matching
+          set -g window-style "bg=default"
+          set -g window-active-style "bg=default"
+          set -g pane-border-style "fg=#3c3836,bg=default"
+          set -g pane-active-border-style "fg=#fe8019,bg=default"
         '';
       };
     };
