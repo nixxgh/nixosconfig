@@ -1,4 +1,20 @@
-/** @type {import('tailwindcss').Config} */
+let theme;
+try {
+  theme = require("./src/theme.json");
+} catch (_) {
+  theme = {
+    hex: {
+      bg: "#000000",
+      surfaceMuted: "#0f172a",
+      surfaceBorder: "#1e293b",
+      text: "#f8fafc",
+      accentLight: "#34d399",
+      accent: "#10b981",
+      accentTeal: "#5eead4",
+    },
+  };
+}
+
 module.exports = {
   corePlugins: {
     preflight: false,
@@ -36,17 +52,17 @@ module.exports = {
     extend: {
       colors: {
         slate: {
-          950: "#020617",
-          900: "#0f172a",
-          800: "#1e293b",
-          200: "#e2e8f0",
+          950: theme.hex.bg,
+          900: theme.hex.surfaceMuted,
+          800: theme.hex.surfaceBorder,
+          200: theme.hex.text,
         },
         emerald: {
-          400: "#34d399",
-          500: "#10b981",
+          400: theme.hex.accentLight,
+          500: theme.hex.accent,
         },
         teal: {
-          300: "#5eead4",
+          300: theme.hex.accentTeal,
         },
       },
     },

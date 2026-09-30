@@ -46,13 +46,13 @@
           };
 
           colors = {
-            background = "1a1a1aff"; # Charcoal 900
-            text = "f8fafcff";       # White text
-            match = "34d399ff";      # Emerald 400
-            selection = "2c2c2cff";  # Charcoal selection
-            selection-text = "10b981ff"; # Emerald 500
-            selection-match = "34d399ff";
-            border = "5a5a5aff";     # Charcoal grey border
+            background = "${self.theme.raw.surface}ff";
+            text = "${self.theme.raw.text}ff";
+            match = "${self.theme.raw.accentLight}ff";
+            selection = "${self.theme.raw.surfaceElevated}ff";
+            selection-text = "${self.theme.raw.accent}ff";
+            selection-match = "${self.theme.raw.accentLight}ff";
+            border = "${self.theme.raw.border}ff";
           };
 
           border = {

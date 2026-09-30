@@ -21,7 +21,7 @@
               path = "screenshot";
               blur_passes = 3;
               blur_size = 8;
-              color = "rgb(15, 23, 42)";
+              color = self.theme.rgb.surfaceMuted;
             }
           ];
 
@@ -32,14 +32,14 @@
               dots_size = 0.25;
               dots_spacing = 0.5;
               dots_center = true;
-              outer_color = "rgb(16, 185, 129)";
-              inner_color = "rgb(30, 41, 59)";
-              font_color = "rgb(248, 250, 252)";
+              outer_color = self.theme.rgb.accent;
+              inner_color = self.theme.rgb.surfaceBorder;
+              font_color = self.theme.rgb.text;
               fade_on_empty = false;
               placeholder_text = "<i>Enter Password...</i>";
               hide_input = false;
-              check_color = "rgb(52, 211, 153)";
-              fail_color = "rgb(239, 68, 68)";
+              check_color = self.theme.rgb.accentLight;
+              fail_color = self.theme.rgb.danger;
               fail_text = "<i>Authentication Failed</i>";
               position = "0, -80";
               halign = "center";
@@ -50,7 +50,7 @@
           label = [
             {
               text = "$TIME";
-              color = "rgb(248, 250, 252)";
+              color = self.theme.rgb.text;
               font_size = 64;
               font_family = "JetBrainsMono Nerd Font Bold";
               position = "0, 100";
@@ -59,7 +59,7 @@
             }
             {
               text = "cmd[update:1000] echo \"$(date +\"%A, %B %d\")\"";
-              color = "rgb(52, 211, 153)";
+              color = self.theme.rgb.accentLight;
               font_size = 18;
               font_family = "JetBrainsMono Nerd Font";
               position = "0, 30";

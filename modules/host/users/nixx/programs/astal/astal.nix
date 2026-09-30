@@ -7,11 +7,13 @@
       ...
     }:
     let
+      themeJson = pkgs.writeText "theme.json" (builtins.toJSON self.theme);
       compiledAstal = pkgs.runCommand "astal-shell-config" {
         nativeBuildInputs = [ pkgs.tailwindcss pkgs.gnused ];
       } ''
         cp -r ${./.} $out
         chmod -R +w $out
+        cp ${themeJson} $out/src/theme.json
         cd $out
         tailwindcss -i src/style.css -o src/style.css -c tailwind.config.cjs
         # Ensure trailing semicolons for GTK CSS parser compatibility

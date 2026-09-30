@@ -58,9 +58,9 @@
 
           .control-center {
             background: rgba(15, 23, 42, 0.95);
-            border: 2px solid #10b981;
+            border: 2px solid ${self.theme.hex.accent};
             border-radius: 12px;
-            color: #f8fafc;
+            color: ${self.theme.hex.text};
             padding: 12px;
           }
 
@@ -70,15 +70,15 @@
           }
 
           .notification {
-            background: #1e293b;
+            background: ${self.theme.hex.surfaceBorder};
             border: 1px solid #334155;
             border-radius: 8px;
-            color: #f8fafc;
+            color: ${self.theme.hex.text};
             padding: 10px;
           }
 
           .notification.critical {
-            border: 2px solid #ef4444;
+            border: 2px solid ${self.theme.hex.danger};
           }
 
           .notification-content {
@@ -87,7 +87,7 @@
 
           .summary {
             font-weight: bold;
-            color: #34d399;
+            color: ${self.theme.hex.accentLight};
           }
 
           .body {
@@ -95,27 +95,27 @@
           }
 
           .widget-title {
-            color: #f8fafc;
+            color: ${self.theme.hex.text};
             font-weight: bold;
             font-size: 14px;
             margin: 6px;
           }
 
           .widget-title > button {
-            background: #1e293b;
-            color: #34d399;
+            background: ${self.theme.hex.surfaceBorder};
+            color: ${self.theme.hex.accentLight};
             border: 1px solid #334155;
             border-radius: 6px;
             padding: 4px 10px;
           }
 
           .widget-title > button:hover {
-            background: #10b981;
-            color: #0f172a;
+            background: ${self.theme.hex.accent};
+            color: ${self.theme.hex.surfaceMuted};
           }
 
           .widget-dnd {
-            background: #1e293b;
+            background: ${self.theme.hex.surfaceBorder};
             border: 1px solid #334155;
             border-radius: 8px;
             padding: 8px;
@@ -123,7 +123,7 @@
           }
 
           .widget-dnd > switch:checked {
-            background: #10b981;
+            background: ${self.theme.hex.accent};
           }
         '';
       };

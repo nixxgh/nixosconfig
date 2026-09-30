@@ -29,7 +29,7 @@
           };
 
           spawn-at-startup = [
-            [ (lib.getExe pkgs.swaybg) "-c" "#000000" ]
+            [ (lib.getExe pkgs.swaybg) "-c" self.theme.hex.bg ]
           ];
 
           xwayland-satellite.path = lib.getExe pkgs.xwayland-satellite;
@@ -45,12 +45,12 @@
 
           layout = {
             gaps = 5;
-            "background-color" = "#000000";
+            "background-color" = self.theme.hex.bg;
             focus-ring = {
               on = { };
               width = 2;
-              active-color = "#5a5a5a";
-              inactive-color = "#242424";
+              active-color = self.theme.hex.border;
+              inactive-color = self.theme.hex.borderInactive;
             };
           };
 
@@ -73,7 +73,7 @@
             };
             "Mod+D" = _: {
               props.hotkey-overlay-title = "Run an Application: fuzzel";
-              content.spawn = lib.getExe pkgs.fuzzel;
+              content.spawn-sh = "pkill -x fuzzel || ${lib.getExe pkgs.fuzzel}";
             };
             "Super+Alt+L" = _: {
               props.hotkey-overlay-title = "Lock the Screen: swaylock";

@@ -15,7 +15,7 @@
         settings = {
           colors = {
             primary = {
-              background = "#000000";
+              background = self.theme.hex.bg;
             };
           };
 
