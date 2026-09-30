@@ -24,18 +24,6 @@
         initContent = ''
           # Ensure Shift+Enter behaves as regular Enter in shell prompt
           bindkey '^[[13;2u' accept-line
-
-          # Responsive fastfetch: dynamically adjusts logo size and layout based on terminal width
-          fastfetch() {
-            local cols=$(tput cols 2>/dev/null || echo ''${COLUMNS:-80})
-            if (( cols >= 90 )); then
-              command fastfetch --logo-type builtin "$@"
-            elif (( cols >= 55 )); then
-              command fastfetch --logo-type small "$@"
-            else
-              command fastfetch --logo-type small --logo-position top "$@"
-            fi
-          }
         '';
       };
 

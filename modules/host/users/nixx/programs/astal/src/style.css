@@ -1,8 +1,0 @@
-@tailwind utilities;
-@tailwind components;
-
-/* Astal Base Window */
-window {
-  background: transparent;
-  color: #ffffff;
-}
