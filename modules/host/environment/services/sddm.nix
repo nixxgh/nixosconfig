@@ -7,46 +7,46 @@
           FontSize = "13";
 
           # Clock & Header
-          HeaderTextColor = self.theme.hex.text;
-          DateTextColor = self.theme.hex.textMuted;
-          TimeTextColor = self.theme.hex.text;
+          HeaderTextColor = config.lib.stylix.colors.base06-hex;
+          DateTextColor = config.lib.stylix.colors.base04-hex;
+          TimeTextColor = config.lib.stylix.colors.base06-hex;
 
           # Background & Form Colors
-          FormBackgroundColor = self.theme.hex.bg;
-          BackgroundColor = self.theme.hex.bg;
-          DimBackgroundColor = self.theme.hex.bg;
+          FormBackgroundColor = config.lib.stylix.colors.base00-hex;
+          BackgroundColor = config.lib.stylix.colors.base00-hex;
+          DimBackgroundColor = config.lib.stylix.colors.base00-hex;
 
           # Inputs
-          LoginFieldBackgroundColor = self.theme.hex.surface;
-          PasswordFieldBackgroundColor = self.theme.hex.surface;
-          LoginFieldTextColor = self.theme.hex.text;
-          PasswordFieldTextColor = self.theme.hex.text;
-          UserIconColor = self.theme.hex.text;
-          PasswordIconColor = self.theme.hex.text;
-          PlaceholderTextColor = self.theme.hex.textMuted;
-          WarningColor = self.theme.hex.danger;
+          LoginFieldBackgroundColor = config.lib.stylix.colors.base01-hex;
+          PasswordFieldBackgroundColor = config.lib.stylix.colors.base01-hex;
+          LoginFieldTextColor = config.lib.stylix.colors.base06-hex;
+          PasswordFieldTextColor = config.lib.stylix.colors.base06-hex;
+          UserIconColor = config.lib.stylix.colors.base06-hex;
+          PasswordIconColor = config.lib.stylix.colors.base06-hex;
+          PlaceholderTextColor = config.lib.stylix.colors.base04-hex;
+          WarningColor = config.lib.stylix.colors.base08-hex;
 
           # Buttons & Controls
-          LoginButtonTextColor = self.theme.hex.bg;
-          LoginButtonBackgroundColor = self.theme.hex.accent;
-          SystemButtonsIconsColor = self.theme.hex.text;
-          SessionButtonTextColor = self.theme.hex.text;
-          VirtualKeyboardButtonTextColor = self.theme.hex.text;
+          LoginButtonTextColor = config.lib.stylix.colors.base00-hex;
+          LoginButtonBackgroundColor = config.lib.stylix.colors.base09-hex;
+          SystemButtonsIconsColor = config.lib.stylix.colors.base06-hex;
+          SessionButtonTextColor = config.lib.stylix.colors.base06-hex;
+          VirtualKeyboardButtonTextColor = config.lib.stylix.colors.base06-hex;
 
           # Dropdowns & Highlights
-          DropdownTextColor = self.theme.hex.text;
-          DropdownSelectedBackgroundColor = self.theme.hex.surfaceElevated;
-          DropdownBackgroundColor = self.theme.hex.surface;
-          HighlightTextColor = self.theme.hex.text;
-          HighlightBackgroundColor = self.theme.hex.surfaceElevated;
-          HighlightBorderColor = self.theme.hex.border;
+          DropdownTextColor = config.lib.stylix.colors.base06-hex;
+          DropdownSelectedBackgroundColor = config.lib.stylix.colors.base02-hex;
+          DropdownBackgroundColor = config.lib.stylix.colors.base01-hex;
+          HighlightTextColor = config.lib.stylix.colors.base06-hex;
+          HighlightBackgroundColor = config.lib.stylix.colors.base02-hex;
+          HighlightBorderColor = config.lib.stylix.colors.base03-hex;
 
           # Hover States
-          HoverUserIconColor = self.theme.hex.accentLight;
-          HoverPasswordIconColor = self.theme.hex.accentLight;
-          HoverSystemButtonsIconsColor = self.theme.hex.accentLight;
-          HoverSessionButtonTextColor = self.theme.hex.accentLight;
-          HoverVirtualKeyboardButtonTextColor = self.theme.hex.accentLight;
+          HoverUserIconColor = config.lib.stylix.colors.base0A-hex;
+          HoverPasswordIconColor = config.lib.stylix.colors.base0A-hex;
+          HoverSystemButtonsIconsColor = config.lib.stylix.colors.base0A-hex;
+          HoverSessionButtonTextColor = config.lib.stylix.colors.base0A-hex;
+          HoverVirtualKeyboardButtonTextColor = config.lib.stylix.colors.base0A-hex;
 
           # System Wallpaper
           Background = "Backgrounds/wallpaper.png";
