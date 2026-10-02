@@ -31,7 +31,7 @@
           WarningColor = "#${config.lib.stylix.colors.base08-hex}";
 
           # Buttons & Controls
-          LoginButtonTextColor = "#${config.lib.stylix.colors.base00-hex}";
+          LoginButtonTextColor = "#${config.lib.stylix.colors.base06-hex}";
           LoginButtonBackgroundColor = "#${config.lib.stylix.colors.base09-hex}";
           SystemButtonsIconsColor = "#${config.lib.stylix.colors.base06-hex}";
           SessionButtonTextColor = "#${config.lib.stylix.colors.base06-hex}";
