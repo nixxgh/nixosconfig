@@ -47,6 +47,14 @@
       # Networking
       networking.networkmanager.enable = true;
 
+      # Configure NetworkManager's shared hotspot (dnsmasq) to hand out public DNS servers
+      # and not rely on Tailscale's MagicDNS which unauthenticated hotspot clients cannot query.
+      environment.etc."NetworkManager/dnsmasq-shared.d/hotspot-dns.conf".text = ''
+        server=1.1.1.1
+        server=8.8.8.8
+        dhcp-option=6,1.1.1.1,8.8.8.8
+      '';
+
       # Time Zone & Localization
       time.timeZone = "Asia/Kolkata";
       i18n.defaultLocale = "en_IN";

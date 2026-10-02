@@ -14,9 +14,9 @@
         useRoutingFeatures = "client";
       };
 
-      # Trust Tailscale virtual interface and allow exit-node routing
+      # Trust Tailscale and Hotspot wireless interfaces, allow exit-node routing
       networking.firewall = {
-        trustedInterfaces = [ "tailscale0" ];
+        trustedInterfaces = [ "tailscale0" "wlo1" ];
         checkReversePath = "loose";
       };
     };
