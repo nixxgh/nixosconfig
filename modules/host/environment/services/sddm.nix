@@ -7,46 +7,50 @@
           FontSize = "13";
 
           # Clock & Header
-          HeaderTextColor = config.lib.stylix.colors.base06-hex;
-          DateTextColor = config.lib.stylix.colors.base04-hex;
-          TimeTextColor = config.lib.stylix.colors.base06-hex;
+          HeaderTextColor = "#${config.lib.stylix.colors.base06-hex}";
+          DateTextColor = "#${config.lib.stylix.colors.base04-hex}";
+          TimeTextColor = "#${config.lib.stylix.colors.base06-hex}";
 
-          # Background & Form Colors
-          FormBackgroundColor = config.lib.stylix.colors.base00-hex;
-          BackgroundColor = config.lib.stylix.colors.base00-hex;
-          DimBackgroundColor = config.lib.stylix.colors.base00-hex;
+          # Full-screen dark translucent overlay (no blur, wallpaper fully visible like terminal)
+          # DimBackground puts a semi-transparent dark tint over the entire screen
+          DimBackground = "0.5";
+          DimBackgroundColor = "#000000";
+          # No form background box — login floats transparently on the dimmed wallpaper
+          HaveFormBackground = "false";
+          PartialBlur = "false";
+          FullBlur = "false";
 
-          # Inputs
-          LoginFieldBackgroundColor = config.lib.stylix.colors.base01-hex;
-          PasswordFieldBackgroundColor = config.lib.stylix.colors.base01-hex;
-          LoginFieldTextColor = config.lib.stylix.colors.base06-hex;
-          PasswordFieldTextColor = config.lib.stylix.colors.base06-hex;
-          UserIconColor = config.lib.stylix.colors.base06-hex;
-          PasswordIconColor = config.lib.stylix.colors.base06-hex;
-          PlaceholderTextColor = config.lib.stylix.colors.base04-hex;
-          WarningColor = config.lib.stylix.colors.base08-hex;
+          # Inputs — slightly visible dark tint so fields are readable against wallpaper
+          LoginFieldBackgroundColor = "#${config.lib.stylix.colors.base01-hex}";
+          PasswordFieldBackgroundColor = "#${config.lib.stylix.colors.base01-hex}";
+          LoginFieldTextColor = "#${config.lib.stylix.colors.base06-hex}";
+          PasswordFieldTextColor = "#${config.lib.stylix.colors.base06-hex}";
+          UserIconColor = "#${config.lib.stylix.colors.base06-hex}";
+          PasswordIconColor = "#${config.lib.stylix.colors.base06-hex}";
+          PlaceholderTextColor = "#${config.lib.stylix.colors.base04-hex}";
+          WarningColor = "#${config.lib.stylix.colors.base08-hex}";
 
           # Buttons & Controls
-          LoginButtonTextColor = config.lib.stylix.colors.base00-hex;
-          LoginButtonBackgroundColor = config.lib.stylix.colors.base09-hex;
-          SystemButtonsIconsColor = config.lib.stylix.colors.base06-hex;
-          SessionButtonTextColor = config.lib.stylix.colors.base06-hex;
-          VirtualKeyboardButtonTextColor = config.lib.stylix.colors.base06-hex;
+          LoginButtonTextColor = "#${config.lib.stylix.colors.base00-hex}";
+          LoginButtonBackgroundColor = "#${config.lib.stylix.colors.base09-hex}";
+          SystemButtonsIconsColor = "#${config.lib.stylix.colors.base06-hex}";
+          SessionButtonTextColor = "#${config.lib.stylix.colors.base06-hex}";
+          VirtualKeyboardButtonTextColor = "#${config.lib.stylix.colors.base06-hex}";
 
           # Dropdowns & Highlights
-          DropdownTextColor = config.lib.stylix.colors.base06-hex;
-          DropdownSelectedBackgroundColor = config.lib.stylix.colors.base02-hex;
-          DropdownBackgroundColor = config.lib.stylix.colors.base01-hex;
-          HighlightTextColor = config.lib.stylix.colors.base06-hex;
-          HighlightBackgroundColor = config.lib.stylix.colors.base02-hex;
-          HighlightBorderColor = config.lib.stylix.colors.base03-hex;
+          DropdownTextColor = "#${config.lib.stylix.colors.base06-hex}";
+          DropdownSelectedBackgroundColor = "#${config.lib.stylix.colors.base02-hex}";
+          DropdownBackgroundColor = "#${config.lib.stylix.colors.base01-hex}";
+          HighlightTextColor = "#${config.lib.stylix.colors.base06-hex}";
+          HighlightBackgroundColor = "#${config.lib.stylix.colors.base02-hex}";
+          HighlightBorderColor = "#${config.lib.stylix.colors.base03-hex}";
 
           # Hover States
-          HoverUserIconColor = config.lib.stylix.colors.base0A-hex;
-          HoverPasswordIconColor = config.lib.stylix.colors.base0A-hex;
-          HoverSystemButtonsIconsColor = config.lib.stylix.colors.base0A-hex;
-          HoverSessionButtonTextColor = config.lib.stylix.colors.base0A-hex;
-          HoverVirtualKeyboardButtonTextColor = config.lib.stylix.colors.base0A-hex;
+          HoverUserIconColor = "#${config.lib.stylix.colors.base0A-hex}";
+          HoverPasswordIconColor = "#${config.lib.stylix.colors.base0A-hex}";
+          HoverSystemButtonsIconsColor = "#${config.lib.stylix.colors.base0A-hex}";
+          HoverSessionButtonTextColor = "#${config.lib.stylix.colors.base0A-hex}";
+          HoverVirtualKeyboardButtonTextColor = "#${config.lib.stylix.colors.base0A-hex}";
 
           # System Wallpaper
           Background = "Backgrounds/wallpaper.png";
