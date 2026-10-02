@@ -29,6 +29,18 @@
         (hideDesktopEntry "kvantummanager")
         (hideDesktopEntry "qt5ct")
         (hideDesktopEntry "qt6ct")
+        {
+          "applications/nmtui.desktop".text = ''
+            [Desktop Entry]
+            Type=Application
+            Name=Wi-Fi & Networks
+            Comment=Manage Wi-Fi and network connections
+            Exec=${pkgs.alacritty}/bin/alacritty -e ${pkgs.networkmanager}/bin/nmtui
+            Icon=network-wireless
+            Terminal=false
+            Categories=Settings;Network;
+          '';
+        }
       ];
 
       stylix.targets.rofi.enable = false;
