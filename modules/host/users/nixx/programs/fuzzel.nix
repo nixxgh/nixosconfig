@@ -22,11 +22,13 @@
         (hideDesktopEntry "xterm")
         (hideDesktopEntry "nixos-manual")
         (hideDesktopEntry "blueman-adapters")
-        (hideDesktopEntry "nm-connection-editor")
         (hideDesktopEntry "dev.lizardbyte.app.Sunshine")
         (hideDesktopEntry "dev.lizardbyte.app.Sunshine.kwin")
         (hideDesktopEntry "dev.lizardbyte.app.Sunshine.terminal")
         (hideDesktopEntry "nvim")
+        (hideDesktopEntry "kvantummanager")
+        (hideDesktopEntry "qt5ct")
+        (hideDesktopEntry "qt6ct")
       ];
 
       stylix.targets.rofi.enable = false;

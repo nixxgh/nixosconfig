@@ -26,6 +26,7 @@ in
         self.homeModules.hyprlock
         self.homeModules.wlsunset
         self.homeModules.fuzzel
+        self.homeModules.nmApplet
       ];
 
       home.username = userName;
