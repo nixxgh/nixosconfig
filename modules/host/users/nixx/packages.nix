@@ -14,6 +14,7 @@
         libnotify
         pavucontrol
         mpvpaper
+        google-chrome
       ];
     };
 }
