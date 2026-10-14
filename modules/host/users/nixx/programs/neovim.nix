@@ -7,7 +7,14 @@
       nixd
       prettier
       astro-language-server
-      typescript-language-server
+      # Workaround for nixpkgs upstream hash mismatch on typescript-language-server 6.0.2
+      (typescript-language-server.overrideAttrs (oldAttrs:
+        lib.optionalAttrs (oldAttrs.version == "6.0.2") {
+          pnpmDeps = oldAttrs.pnpmDeps.overrideAttrs (_: {
+            outputHash = "sha256-xR/EF60lVBsITKgH7wCM2wHM46PFQevD51KfCENSUH4=";
+          });
+        }
+      ))
       tailwindcss-language-server
     ];
 
