@@ -15,6 +15,7 @@
         pavucontrol
         mpvpaper
         google-chrome
+        vscode
       ];
     };
 }
