@@ -14,11 +14,9 @@ in
       imports = [
         self.homeModules.git
         self.homeModules.neovim
-        self.homeModules.firefox
         self.homeModules.zsh
         self.homeModules.tmux
         self.homeModules.yazi
-        self.homeModules.zen
         self.homeModules.alacritty
         self.homeModules.direnv
         self.homeModules.packages
@@ -28,6 +26,18 @@ in
         self.homeModules.fuzzel
         self.homeModules.nmApplet
       ];
+
+      xdg.mimeApps = {
+        enable = true;
+        defaultApplications = {
+          "text/html" = "google-chrome.desktop";
+          "x-scheme-handler/http" = "google-chrome.desktop";
+          "x-scheme-handler/https" = "google-chrome.desktop";
+          "x-scheme-handler/about" = "google-chrome.desktop";
+          "x-scheme-handler/unknown" = "google-chrome.desktop";
+          "text/plain" = lib.mkForce "nvim.desktop";
+        };
+      };
 
       home.username = userName;
       home.homeDirectory = "/home/${userName}";
