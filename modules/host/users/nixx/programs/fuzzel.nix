@@ -50,6 +50,7 @@
         settings = {
           main = {
             prompt = "\"❯ \"";
+            icon-theme = "Papirus-Dark";
             icons-enabled = true;
             terminal = "${pkgs.alacritty}/bin/alacritty";
             layer = "overlay";
