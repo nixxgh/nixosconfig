@@ -58,10 +58,14 @@ in
     pkgs = import inputs.nixpkgs {
       system = "x86_64-linux";
       config.allowUnfree = true;
+      overlays = [
+        self.overlays.hyprlock
+      ];
     };
     extraSpecialArgs = { inherit inputs self; };
     modules = [
       { nixpkgs.config.allowUnfree = true; }
+      self.homeModules.stylix
       self.homeModules.${userName}
     ];
   };

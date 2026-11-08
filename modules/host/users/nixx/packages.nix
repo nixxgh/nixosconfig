@@ -4,7 +4,6 @@
     {
       # User packages that do not require dedicated module configuration
       home.packages = with pkgs; [
-        home-manager
         yt-dlp
         antigravity-cli
         grim

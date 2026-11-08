@@ -50,7 +50,7 @@
               valign = "center";
             }
             {
-              text = "cmd[update:1000] echo \"$(date +\"%A, %B %d\")\"";
+              text = "cmd[update:60000] echo \"$(date +\"%A, %B %d\")\"";
               color = self.theme.rgb.accentLight;
               font_size = 18;
               font_family = "JetBrainsMono Nerd Font";

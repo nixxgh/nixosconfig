@@ -84,6 +84,9 @@
 
       # Allow Unfree Packages
       nixpkgs.config.allowUnfree = true;
+      nixpkgs.overlays = [
+        self.overlays.hyprlock
+      ];
 
       # Fonts
       fonts = {

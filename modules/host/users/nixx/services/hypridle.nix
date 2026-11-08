@@ -22,6 +22,7 @@
             {
               timeout = 60;
               on-timeout = "pidof hyprlock && niri msg action power-off-monitors";
+              on-resume = "niri msg action power-on-monitors";
             }
             # 2. When unlocked: auto-lock session after 3 minutes (180s) of inactivity
             {
@@ -32,6 +33,7 @@
             {
               timeout = 240;
               on-timeout = "niri msg action power-off-monitors";
+              on-resume = "niri msg action power-on-monitors";
             }
           ];
         };
