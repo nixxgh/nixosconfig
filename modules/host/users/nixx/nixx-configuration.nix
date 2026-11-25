@@ -39,6 +39,21 @@ in
         };
       };
 
+      dconf.settings = {
+        "org/gtk/settings/file-chooser" = {
+          sort-column = "modified";
+          sort-order = "descending";
+        };
+        "org/gtk/gtk4/settings/file-chooser" = {
+          sort-column = "modified";
+          sort-order = "descending";
+        };
+        "org/gnome/nautilus/preferences" = {
+          default-sort-order = "mtime";
+          default-sort-in-reverse-order = true;
+        };
+      };
+
       home.sessionVariables = {
         BROWSER = "firefox";
       };
